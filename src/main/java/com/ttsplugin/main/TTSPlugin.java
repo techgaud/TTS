@@ -1,6 +1,7 @@
 package com.ttsplugin.main;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -130,14 +131,22 @@ public class TTSPlugin extends Plugin {
 		new Thread(() -> {
 			try {
 				String request = "https://ttsplugin.com?m=" + URLEncoder.encode(text, "UTF-8") + "&r=" + config.rate() + "&v=" + voice;
-
+				long ms = System.currentTimeMillis();
+				
 			    URLConnection conn = new URL(request).openConnection();
-				AudioInputStream inputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(conn.getInputStream().readAllBytes()));
+			    byte[] bytes = new byte[conn.getContentLength()];
+			    InputStream stream = conn.getInputStream();
+			    for (int i = 0; i < conn.getContentLength(); i++) {
+			    	bytes[i] = (byte)stream.read();
+			    }
+			    
+				AudioInputStream inputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes));
 				
 				Clip clip = AudioSystem.getClip();
 		        clip.open(inputStream);
 		        currentClip = clip;
 		        
+		        System.out.println("Took: " + Math.abs(System.currentTimeMillis() - ms));
 		        if (config.distanceVolume()) {
 		        	Utils.setClipVolume((config.volume() / (float)10) - ((float)distance / (float)config.distanceVolumeEffect()), clip);
 		        } else {
