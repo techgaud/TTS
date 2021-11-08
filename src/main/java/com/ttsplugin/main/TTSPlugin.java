@@ -131,8 +131,7 @@ public class TTSPlugin extends Plugin {
 		new Thread(() -> {
 			try {
 				String request = "https://ttsplugin.com?m=" + URLEncoder.encode(text, "UTF-8") + "&r=" + config.rate() + "&v=" + voice;
-				long ms = System.currentTimeMillis();
-				
+
 			    URLConnection conn = new URL(request).openConnection();
 			    byte[] bytes = new byte[conn.getContentLength()];
 			    InputStream stream = conn.getInputStream();
@@ -146,7 +145,6 @@ public class TTSPlugin extends Plugin {
 		        clip.open(inputStream);
 		        currentClip = clip;
 		        
-		        System.out.println("Took: " + Math.abs(System.currentTimeMillis() - ms));
 		        if (config.distanceVolume()) {
 		        	Utils.setClipVolume((config.volume() / (float)10) - ((float)distance / (float)config.distanceVolumeEffect()), clip);
 		        } else {
