@@ -108,22 +108,26 @@ public class TTSPlugin extends Plugin {
 		final int voice2 = voice;
 		final int distance2 = distance;
 		new Thread(() -> {
-			if (isPlaying) {
-				long start = System.currentTimeMillis();
-				int random = new Random().nextInt(300) + 50;
-				while(true) {
-					if (!isPlaying) {
-						break;
-					} else if (Math.abs(start - System.currentTimeMillis()) > config.queueMs()) {
-						return;
+			try {
+				if (isPlaying) {
+					long start = System.currentTimeMillis();
+					int random = new Random().nextInt(300) + 50;
+					while(true) {
+						if (!isPlaying) {
+							break;
+						} else if (Math.abs(start - System.currentTimeMillis()) > config.queueMs()) {
+							return;
+						}
+						
+						Utils.sleep(random);
 					}
-					
-					Utils.sleep(random);
 				}
+				
+				isPlaying = true;
+				play(ConvertMessage.convert(message), voice2, distance2);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			
-			isPlaying = true;
-			play(ConvertMessage.convert(message), voice2, distance2);
 		}).start();
 	}
 	
