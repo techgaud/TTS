@@ -2,6 +2,7 @@ package com.ttsplugin.main;
 
 import com.google.inject.Provides;
 import com.ttsplugin.enums.Gender;
+import com.ttsplugin.enums.MessageType;
 import com.ttsplugin.enums.Voice;
 import com.ttsplugin.utils.Utils;
 import lombok.Getter;
@@ -105,7 +106,7 @@ public class TTSPlugin extends Plugin {
 			}
 		}
 
-		processMessage(event.getMessage(), event.getName(), event.getType(), false);
+		processMessage(event.getMessage(), event.getName(), event.getType(), MessageType.CHAT);
 	}
 
 	@Subscribe
@@ -115,7 +116,7 @@ public class TTSPlugin extends Plugin {
 
 			if (dialog != null && !dialog.equals(lastDialog)) {
 				if (currentClip != null) currentClip.stop();
-				processMessage(dialog.message, dialog.sender, null, true);
+				processMessage(dialog.message, dialog.sender, MessageType.DIALOG);
 			}
 			
 			lastDialog = dialog;
@@ -138,26 +139,30 @@ public class TTSPlugin extends Plugin {
 		}
 	}
 
-	public void processGameMessage(String message) {
-		processMessage(message, "", null, false);
+	public void processMessage(String message, MessageType messageType) {
+		processMessage(message, "", null, messageType);
 	}
-
-	public void processMessage(String message, String sender, ChatMessageType type, boolean dialog) {
+	
+	public void processMessage(String message, String sender, MessageType messageType) {
+		processMessage(message, sender, null, messageType);
+	}
+	
+	public void processMessage(String message, String sender, ChatMessageType type, MessageType messageType) {
 		if (Math.abs(System.currentTimeMillis() - lastProcess) < 50) return;
 		lastProcess = System.currentTimeMillis();
 		
 		int voice = 0;
 		int distance = 1;
-		if (!dialog) {
+		if (messageType == MessageType.CHAT) {
 			if (type != ChatMessageType.PUBLICCHAT && type != ChatMessageType.AUTOTYPER && !config.gameMessages()) return;
 			if (type == ChatMessageType.AUTOTYPER && !config.autoChat()) return;
 			if (!sender.isEmpty() && ignoreSpam(message, sender) && config.ignoreSpam()) return;
-			if (!config.chatMessages()) return;
+			if (!config.chatMessages() && !sender.isEmpty()) return;
 			
 			Player player = getPlayerFromUsername(sender);
 			voice = getVoice(sender, player == null ? Gender.UNKNOWN : Gender.get(player.getPlayerComposition().isFemale())).id;
 			distance = player == null ? 0 : client.getLocalPlayer().getWorldLocation().distanceTo(player.getWorldLocation());
-		} else {
+		} else if (messageType == MessageType.DIALOG) {
 			if (sender.equals(client.getLocalPlayer().getName())) {
 				voice = getVoice(sender, Gender.get(client.getLocalPlayer().getPlayerComposition().isFemale())).id;
 			} else {
@@ -167,6 +172,8 @@ public class TTSPlugin extends Plugin {
 					voice = config.dialogVoice().id;
 				}
 			}
+		} else if (messageType == MessageType.ACCESSIBILITY) {
+			voice = config.gameMessageVoice().id;
 		}
 		
 		final int voice2 = voice;
@@ -339,7 +346,7 @@ public class TTSPlugin extends Plugin {
 				itemName = widget.getChild(menuOptionClicked.getParam0()).getText();
 			}
 		}
-		processGameMessage(actionName + " " + itemName);
+		
+		processMessage(actionName + " " + itemName, MessageType.ACCESSIBILITY);
 	}
-
 }

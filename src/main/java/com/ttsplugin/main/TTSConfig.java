@@ -3,10 +3,12 @@ package com.ttsplugin.main;
 import com.ttsplugin.enums.Language;
 import com.ttsplugin.enums.Voice;
 
-import net.runelite.client.config.*;
-
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import net.runelite.client.config.Config;
+import net.runelite.client.config.ConfigGroup;
+import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Keybind;
+import net.runelite.client.config.Range;
 
 @ConfigGroup("tts")
 public interface TTSConfig extends Config {
@@ -93,34 +95,23 @@ public interface TTSConfig extends Config {
 		return false;
 	}
 
-
-	@ConfigSection(name = "Accessibility", description = "Accessibility settings", position = 47, closedByDefault = true)
+	@ConfigSection(name = "Accessibility", description = "Accessibility settings <br> These settings use the Game message voice set in the voice settings", position = 47, closedByDefault = true)
 	String accessibilitySettings = "accessibilitySettings";
 
-	@ConfigItem(
-		keyName = "enableOnClick",
-		name = "On Click",
-		description = "Enables narrating on click",
-		section = accessibilitySettings,
-		position = 1
-	)
-	default boolean enableOnClick() { return false; }
-	@ConfigItem(
-		keyName = "narrateHotkey",
-		name = "Narrate Hotkey",
-		description = "The hotkey that triggers narration for what you're hovering over",
-		section = accessibilitySettings,
-		position = 2
-	)
-	default Keybind narrateHotkey() { return new Keybind(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK); }
-	@ConfigItem(
-		keyName = "narrateQuantityHotkey",
-		name = "Narrate Quantity Hotkey",
-		description = "The hotkey that narrates the quantity of the hovered item",
-		section = accessibilitySettings,
-		position = 3
-	)
-	default Keybind narrateQuantityHotkey() { return new Keybind(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK); }
+	@ConfigItem(keyName = "enableOnClick", name = "On Click", description = "Enables narrating on click", section = accessibilitySettings, position = 1)
+	default boolean enableOnClick() {
+		return false; 
+	}
+	
+	@ConfigItem(keyName = "narrateHotkey", name = "Narrate Hotkey", description = "The hotkey that triggers narration for what you're hovering over", section = accessibilitySettings, position = 2)
+	default Keybind narrateHotkey() { 
+		return Keybind.NOT_SET; 
+	}
+	
+	@ConfigItem(keyName = "narrateQuantityHotkey", name = "Narrate Quantity Hotkey", description = "The hotkey that narrates the quantity of the hovered item", section = accessibilitySettings, position = 3)
+	default Keybind narrateQuantityHotkey() {
+		return Keybind.NOT_SET; 
+	}
 
 	@ConfigSection(name = "Advanced", description = "Advanced settings", position = 85, closedByDefault = true)
 	String advancedSettings = "advancedSettings";
