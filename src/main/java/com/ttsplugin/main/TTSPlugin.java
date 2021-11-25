@@ -38,10 +38,12 @@ import java.util.*;
 @PluginDescriptor(name = "Text to speech", description = "Text to speech for chat and dialog", tags = {"tts", "text to speech", "voice", "chat", "dialog"})
 public class TTSPlugin extends Plugin {	
 	public HashMap<String, ArrayList<Long>> spamHash = new HashMap<>();
+	public List<TTSMessage> queue = new ArrayList<>();
 	public boolean isPlaying;
 	public long lastProcess;
 	public Dialog lastDialog;
 	public Clip currentClip;
+	public Thread queueThread;
 
 	@Inject
 	private Client client;
@@ -72,18 +74,43 @@ public class TTSPlugin extends Plugin {
 			keyboardHandler.handleHotkey(config.narrateHotkey());
 		}
 	};
+	
 	private final HotkeyListener quantityHotkeyListener = new HotkeyListener(() -> this.config.narrateQuantityHotkey()) {
 		@Override
 		public void hotkeyPressed() {
 			keyboardHandler.handleHotkey(config.narrateQuantityHotkey());
 		}
 	};
+	
 	@Override
 	protected void startUp() {
 		// TODO: consolidate hotkey vs click message processing
 		this.keyManager.registerKeyListener(this.hotkeyListener);
 		this.keyManager.registerKeyListener(this.quantityHotkeyListener);
 		this.mouseManager.registerMouseListener(this.mouseHandler);
+		
+		//New thread for playing messages from queue. this will be terminated when the plugin is disabled
+		queueThread = new Thread(() -> {
+			while(true) {
+				try {
+					List<TTSMessage> queueCopy = new ArrayList<>();
+					queueCopy.addAll(this.queue);
+					
+					for (TTSMessage message : queueCopy) {
+						if ((double)Math.abs(message.time - System.currentTimeMillis()) / (double)1000 <= this.config.queueSeconds()) {
+							play(message);
+						}
+						
+						this.queue.remove(message);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				
+				Utils.sleep(50);
+			}
+		});
+		queueThread.start();
 	}
 
 	@Override
@@ -91,6 +118,10 @@ public class TTSPlugin extends Plugin {
 		this.keyManager.unregisterKeyListener(this.hotkeyListener);
 		this.keyManager.unregisterKeyListener(this.quantityHotkeyListener);
 		this.mouseManager.unregisterMouseListener(this.mouseHandler);
+		
+		//Terminate queue thread
+		queueThread.suspend();
+		queueThread = null;
 	}
 
 	@Provides
@@ -180,68 +211,59 @@ public class TTSPlugin extends Plugin {
 		final int distance2 = distance;
 		new Thread(() -> {
 			try {
-				if (isPlaying) {
-					long start = System.currentTimeMillis();
-					int random = new Random().nextInt(300) + 50;
-					while(true) {
-						if (!isPlaying) {
-							break;
-						} else if (Math.abs(start - System.currentTimeMillis()) > config.queueMs()) {
-							return;
-						}
-						
-						Utils.sleep(random);
-					}
-				}
-				
-				isPlaying = true;
-				play(ConvertMessage.convert(message), voice2, distance2);
+				addToQueue(ConvertMessage.convert(message), voice2, distance2);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}).start();
 	}
 	
-	public void play(String text, int voice, int distance) {	
-		new Thread(() -> {
-			try {
-				String request = "https://ttsplugin.com?m=" + URLEncoder.encode(text, "UTF-8") + "&r=" + config.rate() + "&v=" + voice;
+	/**
+	 * Adds this message to the queue.
+	 */
+	public void addToQueue(String message, int voice, int distance) {
+		this.queue.add(new TTSMessage(message, voice, distance, System.currentTimeMillis()));
+	}
+	
+	/**
+	 * Plays the text with the specified voice and distance
+	 */
+	public void play(TTSMessage message) {
+		try {
+			String request = "https://ttsplugin.com?m=" + URLEncoder.encode(message.message, "UTF-8") + "&r=" + config.rate() + "&v=" + message.voice;
 
-			    URLConnection conn = new URL(request).openConnection();
-			    byte[] bytes = new byte[conn.getContentLength()];
-			    InputStream stream = conn.getInputStream();
-			    for (int i = 0; i < conn.getContentLength(); i++) {
-			    	bytes[i] = (byte)stream.read();
-			    }
-			    
-				AudioInputStream inputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes));
-				
-				Clip clip = AudioSystem.getClip();
-		        clip.open(inputStream);
-		        currentClip = clip;
-		        
-		        if (config.distanceVolume()) {
-		        	Utils.setClipVolume((config.volume() / (float)10) - ((float)distance / (float)config.distanceVolumeEffect()), clip);
-		        } else {
-		        	Utils.setClipVolume(config.volume() / (float)10, clip);
-		        }
-		        
-		        clip.start();
-				Utils.sleep(50);
-				
-				while(clip.isRunning())  {
-					Utils.sleep(50);
-					if (client.getGameState() == GameState.LOGIN_SCREEN) {
-						clip.stop();
-						break;
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		    URLConnection conn = new URL(request).openConnection();
+		    byte[] bytes = new byte[conn.getContentLength()];
+		    InputStream stream = conn.getInputStream();
+		    for (int i = 0; i < conn.getContentLength(); i++) {
+		    	bytes[i] = (byte)stream.read();
+		    }
+		    
+			AudioInputStream inputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes));
 			
-			isPlaying = false;
-		}).start();
+			Clip clip = AudioSystem.getClip();
+	        clip.open(inputStream);
+	        currentClip = clip;
+	        
+	        if (config.distanceVolume()) {
+	        	Utils.setClipVolume((config.volume() / (float)10) - ((float)message.distance / (float)config.distanceVolumeEffect()), clip);
+	        } else {
+	        	Utils.setClipVolume(config.volume() / (float)10, clip);
+	        }
+	        
+	        clip.start();
+			Utils.sleep(50);
+			
+			while(clip.isRunning())  {
+				Utils.sleep(50);
+				if (client.getGameState() == GameState.LOGIN_SCREEN || queueThread == null) {
+					clip.stop();
+					break;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public Voice getVoice(String sender, Gender gender) {

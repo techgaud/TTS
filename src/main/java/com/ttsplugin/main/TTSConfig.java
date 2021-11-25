@@ -37,12 +37,18 @@ public interface TTSConfig extends Config {
 	
 	@ConfigItem(keyName = "dialogs", name = "Dialogs", description = "Applies text to speech for dialogs too <br> You can set the NPC voice by disabling random voice and setting the Dialog voice in voice settings", position = 25, section = generalSettings)
 	default boolean dialogs() {
-		return false;
+		return true;
 	}
 	
 	@ConfigItem(keyName = "blacklistedWords", name = "Blacklisted words", description = "Any message that contains these words will not be spoken <br> Write the word then press enter for new line", position = 26, section = generalSettings)
 	default String blacklistedWords() {
 		return "";
+	}
+	
+	@Range(min = 0, max = 60)
+	@ConfigItem(keyName = "queueSeconds", name = "Queue seconds", description = "If a message is already playing how long to queue the next messages for in seconds <br> So it will play them after the current one finishes", position = 87, section = generalSettings)
+	default double queueSeconds() {
+		return 2.5;
 	}
 	
 	@ConfigSection(name = "Voice", description = "Voice settings", position = 46, closedByDefault = false)
@@ -120,12 +126,6 @@ public interface TTSConfig extends Config {
 	@ConfigItem(keyName = "distanceVolumeEffect", name = "Distance volume effect", description = "Controls how much more quiet the sound is when the sender is further away <br> Lower value = More quieter the further away the sender is", position = 86, section = advancedSettings)
 	default int distanceVolumeEffect() {
 		return 18;
-	}
-	
-	@Range(min = 0, max = 5000)
-	@ConfigItem(keyName = "queueMs", name = "Queue ms", description = "If a message is already playing how long to queue the next messages for in milliseconds <br> So it will play them after the current one finishes", position = 87, section = advancedSettings)
-	default int queueMs() {
-		return 2250;
 	}
 	
 	@Range(min = 1, max = 15)
