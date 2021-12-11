@@ -77,9 +77,7 @@ public class KeyboardHandler {
                 } else if (hoveredWidget != null && hoveredWidget.getId() == WidgetInfo.INVENTORY.getId()) {
                     plugin.processMessage(hoveredEntry.getOption() + " " + hoveredEntry.getTarget(), MessageType.ACCESSIBILITY);
                 } else {
-                    if (this.client.isMenuOpen() || (
-                        hoveredEntry.getType() != MenuAction.WALK.getId() && hoveredEntry.getType() != MenuAction.CANCEL.getId())
-                    ) {
+                    if (this.client.isMenuOpen() || (hoveredEntry.getType() != MenuAction.WALK && hoveredEntry.getType() != MenuAction.CANCEL)) {
                         plugin.processMessage(hoveredEntry.getOption() + " " + hoveredEntry.getTarget(), MessageType.ACCESSIBILITY);
                     }
                 }
