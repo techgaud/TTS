@@ -35,7 +35,7 @@ public interface TTSConfig extends Config {
 		return false;
 	}
 
-	@ConfigItem(keyName = "notificationMessages", name = "Notification messages", description = "Speak notifications.", position = 25, section = generalSettings)
+	@ConfigItem(keyName = "notificationMessages", name = "Notification messages", description = "Speak notifications. \"RuneLite\" > \"Notification Settings\" > \"Game message notifications\" must be enabled.", position = 25, section = generalSettings)
 	default boolean notificationMessages() {
 		return false;
 	}

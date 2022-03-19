@@ -229,6 +229,8 @@ public class TTSPlugin extends Plugin {
 			}
 		} else if (messageType == MessageType.ACCESSIBILITY) {
 			voice = config.gameMessageVoice().id;
+		} else if (messageType == MessageType.NOTIFICATION) {
+			voice = config.notificationMessageVoice().id;
 		}
 		
 		final int voice2 = voice;
