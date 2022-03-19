@@ -16,6 +16,7 @@ import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.NotificationFired;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.input.KeyManager;
 import net.runelite.client.input.MouseManager;
@@ -130,14 +131,17 @@ public class TTSPlugin extends Plugin {
 	}
 
 	@Subscribe
-	public void onChatMessage(ChatMessage event) {
-		for (String line : config.blacklistedWords().split("\\r?\\n")) {
-			if (!line.isEmpty() && line.length() > 1 && event.getMessage().contains(line)) {
-				return;
-			}
+	public void onNotificationFired(NotificationFired event) {
+		if(config.notificationMessages() && passesBlacklist(event.getMessage())) {
+			processMessage(event.getMessage(), MessageType.NOTIFICATION);
 		}
+	}
 
-		processMessage(event.getMessage(), event.getName(), event.getType(), MessageType.CHAT);
+	@Subscribe
+	public void onChatMessage(ChatMessage event) {
+		if(passesBlacklist(event.getMessage())) {
+			processMessage(event.getMessage(), event.getName(), event.getType(), MessageType.CHAT);
+		}
 	}
 
 	@Subscribe
@@ -168,6 +172,26 @@ public class TTSPlugin extends Plugin {
 		if (this.client.isMenuOpen() || blacklist) {
 			this.sayMenuOptionClicked(menuOptionClicked);
 		}
+	}
+
+	public boolean passesBlacklist(String message) {
+		boolean found = false;
+		for (String line : config.blacklistedWords().split("\\r?\\n")) {
+			if (!line.isEmpty() && line.length() > 1 && message.contains(line)) {
+				if(config.whitelist()) {
+					found = true;
+					break;
+				} else {
+					return false;
+				}
+			}
+		}
+
+		if(config.whitelist() && !found) {
+			return false;
+		}
+
+		return true;
 	}
 
 	public void processMessage(String message, MessageType messageType) {
