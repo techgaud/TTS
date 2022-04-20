@@ -165,7 +165,7 @@ public class TTSPlugin extends Plugin {
 
 		boolean blacklist = menuOptionClicked.getMenuAction() != MenuAction.WALK &&
 			menuOptionClicked.getMenuAction() != MenuAction.CANCEL &&
-			menuOptionClicked.getMenuAction() != MenuAction.WIDGET_TYPE_6;
+			menuOptionClicked.getMenuAction() != MenuAction.WIDGET_CONTINUE;
 
 		// If the menu is open, and you click on a menu option, say it
 		// If the menu is not open (clicking on something), only say it if it is not Walk, Cancel, or a dialog option
