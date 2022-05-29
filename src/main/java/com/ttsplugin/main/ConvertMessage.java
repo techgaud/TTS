@@ -33,6 +33,8 @@ public class ConvertMessage {
 			new Convert(ConvertMode.REPLACE_WORD, "tbows", "twisted bows");
 			new Convert(ConvertMode.REPLACE_WORD, "p2p", "pay to play");
 			new Convert(ConvertMode.REPLACE_WORD, "f2p", "free to play");
+			new Convert(ConvertMode.REPLACE_WORD, "p2p?", "pay to play?");
+			new Convert(ConvertMode.REPLACE_WORD, "f2p?", "free to play?");
 			new Convert(ConvertMode.REPLACE_WORD, "ty", "thank you");
 			new Convert(ConvertMode.REPLACE_WORD, "tysm", "thank you so much");
 			new Convert(ConvertMode.REPLACE_WORD, "tyvm", "thank you very much");
@@ -57,6 +59,10 @@ public class ConvertMessage {
 			new Convert(ConvertMode.REPLACE_WORD, "wby", "what about you");
 			new Convert(ConvertMode.REPLACE_WORD, "brb", "be right back");
 			new Convert(ConvertMode.REPLACE_WORD, "ik", "i know");
+			new Convert(ConvertMode.REPLACE_WORD, "<lt>3", "heart");
+			new Convert(ConvertMode.REPLACE_WORD, "fcape", "fire cape");
+			new Convert(ConvertMode.REPLACE_WORD, "xp", "experience");
+			new Convert(ConvertMode.REPLACE_WORD, "nty", "no thank you");
 			
 			new Convert(ConvertMode.REPLACE_TEXT, "dhide", "dragonhide");
 			

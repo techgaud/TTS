@@ -45,7 +45,7 @@ public interface TTSConfig extends Config {
 		return true;
 	}
 
-	@ConfigItem(keyName = "blacklistedWords", name = "Blacklisted words", description = "Any message that contains these words will not be spoken <br> Write the word then press enter for new line", position = 27, section = generalSettings)
+	@ConfigItem(keyName = "blacklistedWords", name = "Blacklisted words", description = "Any message that contains these words will not be spoken <br> Write the word then press enter for new line <br> Each word needs to be longer than 1 character", position = 27, section = generalSettings)
 	default String blacklistedWords() {
 		return "";
 	}
@@ -55,7 +55,7 @@ public interface TTSConfig extends Config {
 		return false;
 	}
 
-	@Range(min = 0, max = 60)
+	@Range(min = 1, max = 60)
 	@ConfigItem(keyName = "queueSeconds", name = "Queue seconds", description = "If a message is already playing how long to queue the next messages for in seconds <br> So it will play them after the current one finishes", position = 87, section = generalSettings)
 	default double queueSeconds() {
 		return 2.5;
@@ -151,6 +151,11 @@ public interface TTSConfig extends Config {
 
 	@ConfigItem(keyName = "useVoiceForSelfWithRandom", name = "Use voice for self with random voice", description = "Uses the voice set in the Voice setting in voice section <br> As your voice even when random voice is enabled", position = 89, section = advancedSettings)
 	default boolean useVoiceForSelfWithRandom() {
+		return false;
+	}
+	
+	@ConfigItem(keyName = "chatMessagesFriendsOnly", name = "Chat friends only", description = "Only speaks messages sent by your ingame friends if Chat messages setting is enabled", position = 90, section = advancedSettings)
+	default boolean chatMessagesFriendsOnly() {
 		return false;
 	}
 }

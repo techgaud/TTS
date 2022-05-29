@@ -36,7 +36,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.*;
 
-@PluginDescriptor(name = "Text to speech", description = "Text to speech for chat and dialog", tags = {"tts", "text to speech", "voice", "chat", "dialog"})
+@PluginDescriptor(name = "Text to speech", description = "Text to speech for chat, dialog, menu options and notifications", tags = {"tts", "text", "voice", "chat", "dialog", "speak", "notification"})
 public class TTSPlugin extends Plugin {	
 	public HashMap<String, ArrayList<Long>> spamHash = new HashMap<>();
 	public List<TTSMessage> queue = new ArrayList<>();
@@ -132,14 +132,14 @@ public class TTSPlugin extends Plugin {
 
 	@Subscribe
 	public void onNotificationFired(NotificationFired event) {
-		if(config.notificationMessages() && passesBlacklist(event.getMessage())) {
+		if (config.notificationMessages() && passesBlacklist(event.getMessage())) {
 			processMessage(event.getMessage(), MessageType.NOTIFICATION);
 		}
 	}
 
 	@Subscribe
 	public void onChatMessage(ChatMessage event) {
-		if(passesBlacklist(event.getMessage())) {
+		if (passesBlacklist(event.getMessage())) {
 			processMessage(event.getMessage(), event.getName(), event.getType(), MessageType.CHAT);
 		}
 	}
@@ -204,17 +204,17 @@ public class TTSPlugin extends Plugin {
 	
 	public void processMessage(String message, String sender, ChatMessageType type, MessageType messageType) {
 		if (Math.abs(System.currentTimeMillis() - lastProcess) < 50) return;
-		lastProcess = System.currentTimeMillis();
 		
 		int voice = 0;
 		int distance = 1;
 		if (messageType == MessageType.CHAT) {
+			Player player = getPlayerFromUsername(sender);
 			if (type != ChatMessageType.PUBLICCHAT && type != ChatMessageType.AUTOTYPER && !config.gameMessages()) return;
 			if (type == ChatMessageType.AUTOTYPER && !config.autoChat()) return;
 			if (!sender.isEmpty() && ignoreSpam(message, sender) && config.ignoreSpam()) return;
 			if (!config.chatMessages() && !sender.isEmpty()) return;
+			if (config.chatMessagesFriendsOnly() && !player.isFriend()) return;
 			
-			Player player = getPlayerFromUsername(sender);
 			voice = getVoice(sender, player == null ? Gender.UNKNOWN : Gender.get(player.getPlayerComposition().isFemale())).id;
 			distance = player == null ? 0 : client.getLocalPlayer().getWorldLocation().distanceTo(player.getWorldLocation());
 		} else if (messageType == MessageType.DIALOG) {
@@ -232,6 +232,8 @@ public class TTSPlugin extends Plugin {
 		} else if (messageType == MessageType.NOTIFICATION) {
 			voice = config.notificationMessageVoice().id;
 		}
+		
+		lastProcess = System.currentTimeMillis();
 		
 		final int voice2 = voice;
 		final int distance2 = distance;
