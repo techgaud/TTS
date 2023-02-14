@@ -40,7 +40,6 @@ import java.util.*;
 public class TTSPlugin extends Plugin {	
 	public HashMap<String, ArrayList<Long>> spamHash = new HashMap<>();
 	public List<TTSMessage> queue = new ArrayList<>();
-	public boolean isPlaying;
 	public long lastProcess;
 	public Dialog lastDialog;
 	public Clip currentClip;
@@ -94,9 +93,7 @@ public class TTSPlugin extends Plugin {
 		queueThread = new Thread(() -> {
 			while(true) {
 				try {
-					List<TTSMessage> queueCopy = new ArrayList<>();
-					queueCopy.addAll(this.queue);
-					
+					List<TTSMessage> queueCopy = new ArrayList<>(this.queue);
 					for (TTSMessage message : queueCopy) {
 						if ((double)Math.abs(message.time - System.currentTimeMillis()) / (double)1000 <= this.config.queueSeconds()) {
 							play(message);
@@ -177,7 +174,7 @@ public class TTSPlugin extends Plugin {
 	public boolean passesBlacklist(String message) {
 		boolean found = false;
 		for (String line : config.blacklistedWords().split("\\r?\\n")) {
-			if (!line.isEmpty() && line.length() > 1 && message.contains(line)) {
+			if (line.length() > 1 && message.contains(line)) {
 				if(config.whitelist()) {
 					found = true;
 					break;
@@ -187,11 +184,7 @@ public class TTSPlugin extends Plugin {
 			}
 		}
 
-		if(config.whitelist() && !found) {
-			return false;
-		}
-
-		return true;
+		return !config.whitelist() || found;
 	}
 
 	public void processMessage(String message, MessageType messageType) {
@@ -201,7 +194,8 @@ public class TTSPlugin extends Plugin {
 	public void processMessage(String message, String sender, MessageType messageType) {
 		processMessage(message, sender, null, messageType);
 	}
-	
+
+	//TODO: Fix this mess (more convenient way to check conditions)
 	public void processMessage(String message, String sender, ChatMessageType type, MessageType messageType) {
 		if (Math.abs(System.currentTimeMillis() - lastProcess) < 50) return;
 		
@@ -282,13 +276,15 @@ public class TTSPlugin extends Plugin {
 	        clip.start();
 			Utils.sleep(50);
 			
-			while(clip.isRunning())  {
+			while(clip.isRunning()) {
 				Utils.sleep(50);
 				if (client.getGameState() == GameState.LOGIN_SCREEN || queueThread == null) {
 					clip.stop();
 					break;
 				}
 			}
+
+			clip.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -323,18 +319,17 @@ public class TTSPlugin extends Plugin {
 	
 	public boolean ignoreSpam(String message, String sender) {
 		long ms = System.currentTimeMillis();
-		
-		Set<String> keySet = new HashSet<>();
-		keySet.addAll(spamHash.keySet());
+
+		Set<String> keySet = new HashSet<>(spamHash.keySet());
 		for (String key : keySet) {
 			ArrayList<Long> values = spamHash.get(key);
 			if (values.isEmpty()) {
 				spamHash.remove(key);
 			}
-			
-			for (int i = 0; i < values.size(); i++) {
-				if (Math.abs(ms - values.get(i)) > 30000) {
-					spamHash.get(key).remove(values.get(i));
+
+			for (Long value : values) {
+				if (Math.abs(ms - value) > 30000) {
+					spamHash.get(key).remove(value);
 				}
 			}
 		}
@@ -347,12 +342,8 @@ public class TTSPlugin extends Plugin {
 			array.add(ms);
 			spamHash.put(key, array);
 		}
-		
-		if (spamHash.get(key).size() > config.spamMessages()) {
-			return true;
-		}
-		
-		return false;
+
+		return spamHash.get(key).size() > config.spamMessages();
 	}
 	
 	public Player getPlayerFromUsername(String username) {

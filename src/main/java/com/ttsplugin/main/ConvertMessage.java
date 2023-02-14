@@ -6,7 +6,7 @@ import java.util.List;
 public class ConvertMessage {
 	
 	/**
-	 * Changes the message so it will be spelled better by the tts
+	 * Changes the message, so it will be spelled better by the tts
 	 * By changing shortens and stuff.
 	 */
 	public static String convert(String message) {
@@ -117,7 +117,7 @@ public class ConvertMessage {
 		}
 	}
 	
-	public static enum ConvertMode {
+	public enum ConvertMode {
 		REPLACE_TEXT(),
 		REPLACE_WORD(),
 		REPLACE_TEXT_AFTER_NUMBER_IN_WORD(),

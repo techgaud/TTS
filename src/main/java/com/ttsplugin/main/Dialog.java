@@ -21,15 +21,15 @@ public class Dialog {
 	}
 	
 	public static Dialog getCurrentDialog(Client client) {
-		if (!isHidden(client.getWidget(WidgetInfo.DIALOG_PLAYER_TEXT))) {
+		if (isVisible(client.getWidget(WidgetInfo.DIALOG_PLAYER_TEXT))) {
 			return new Dialog(getWidgetText(client.getWidget(WidgetInfo.DIALOG_PLAYER_TEXT)), client.getLocalPlayer().getName());
-		} else if (!isHidden(client.getWidget(WidgetInfo.DIALOG_NPC_TEXT))) {
+		} else if (isVisible(client.getWidget(WidgetInfo.DIALOG_NPC_TEXT))) {
 			return new Dialog(getWidgetText(client.getWidget(WidgetInfo.DIALOG_NPC_TEXT)), getWidgetText(client.getWidget(WidgetInfo.DIALOG_NPC_NAME)));
-		} else if (!isHidden(client.getWidget(WidgetInfo.DIALOG_OPTION_OPTIONS))) {
+		} else if (isVisible(client.getWidget(WidgetInfo.DIALOG_OPTION_OPTIONS))) {
 			return new Dialog(getWidgetText(client.getWidget(WidgetInfo.DIALOG_OPTION_OPTIONS)), "");
-		} else if (!isHidden(client.getWidget(WidgetInfo.LEVEL_UP_SKILL))) {
+		} else if (isVisible(client.getWidget(WidgetInfo.LEVEL_UP_SKILL))) {
 			return new Dialog(getWidgetText(client.getWidget(WidgetInfo.LEVEL_UP_SKILL)), getWidgetText(client.getWidget(WidgetInfo.LEVEL_UP_LEVEL)));
-		} else if (!isHidden(client.getWidget(WidgetInfo.PACK(229, 1)))) { // Cat age
+		} else if (isVisible(client.getWidget(WidgetInfo.PACK(229, 1)))) { // Cat age
 			return new Dialog(getWidgetText(client.getWidget(WidgetInfo.PACK(229, 1))), "");
 		} else {
 			return null;
@@ -37,13 +37,11 @@ public class Dialog {
 	}
 	
 	private static String getWidgetText(Widget widget) {
-		if (widget != null) return widget.getText();
-		return null;
+		return widget != null ? widget.getText() : null;
 	}
 	
-	private static boolean isHidden(Widget widget) {
-		if (widget != null) return widget.isHidden();
-		return true;
+	private static boolean isVisible(Widget widget) {
+		return widget != null && !widget.isHidden();
 	}
 	
 	@Override
