@@ -43,8 +43,7 @@ public class KeyboardHandler {
                     if (childWidget != null && childWidget.getItemId() != -1) {
                         plugin.processMessage(childWidget.getItemQuantity() + "", MessageType.ACCESSIBILITY);
                     } else if (hoveredWidget.getId() == WidgetInfo.INVENTORY.getId()) {
-                        WidgetItem itemWidget = hoveredWidget.getWidgetItem(hoveredEntry.getParam0());
-                        int quantity = itemWidget.getQuantity();
+                        int quantity = hoveredWidget.getItemQuantity();
                         plugin.processMessage(quantity + "", MessageType.ACCESSIBILITY);
                     }
                 }

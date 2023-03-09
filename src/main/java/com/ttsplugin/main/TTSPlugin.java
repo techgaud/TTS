@@ -378,8 +378,7 @@ public class TTSPlugin extends Plugin {
 				actionName = this.client.getWidget(553, 8).getText();
 				// normal inventory
 			} else if (widget.getId() == WidgetInfo.INVENTORY.getId()) {
-				WidgetItem itemWidget = widget.getWidgetItem(menuOptionClicked.getParam0());
-				int itemID = itemWidget.getId();
+				int itemID = widget.getItemId();
 				ItemComposition item = this.itemManager.getItemComposition(itemID);
 				itemName = item.getName();
 				// Fallback
