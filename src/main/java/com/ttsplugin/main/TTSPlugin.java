@@ -7,6 +7,7 @@ import com.ttsplugin.enums.Voice;
 import com.ttsplugin.utils.Utils;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.Synchronized;
 import net.runelite.api.*;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameTick;
@@ -38,7 +39,7 @@ import java.util.*;
 
 @PluginDescriptor(name = "Text to speech", description = "Text to speech for chat, dialog, menu options and notifications", tags = {"tts", "text", "voice", "chat", "dialog", "speak", "notification"})
 public class TTSPlugin extends Plugin {	
-	public HashMap<String, ArrayList<Long>> spamHash = new HashMap<>();
+	private final Map<String, List<Long>> spamHash = new HashMap<>();
 	public List<TTSMessage> queue = new ArrayList<>();
 	public long lastProcess;
 	public Dialog lastDialog;
@@ -317,33 +318,19 @@ public class TTSPlugin extends Plugin {
 		return config.voice();
 	}
 	
+	@Synchronized
 	public boolean ignoreSpam(String message, String sender) {
 		long ms = System.currentTimeMillis();
 
-		Set<String> keySet = new HashSet<>(spamHash.keySet());
-		for (String key : keySet) {
-			ArrayList<Long> values = spamHash.get(key);
-			if (values.isEmpty()) {
-				spamHash.remove(key);
-			}
+		spamHash.values().removeIf(values -> {
+			values.removeIf(value -> Math.abs(ms - value) > 30000);
+			return values.isEmpty();
+		});
 
-			for (Long value : values) {
-				if (Math.abs(ms - value) > 30000) {
-					spamHash.get(key).remove(value);
-				}
-			}
-		}
-		
 		String key = message + sender;
-		if (spamHash.containsKey(key)) {
-			spamHash.get(key).add(ms);
-		} else {
-			ArrayList<Long> array = new ArrayList<>();
-			array.add(ms);
-			spamHash.put(key, array);
-		}
-
-		return spamHash.get(key).size() > config.spamMessages();
+		List<Long> list = spamHash.computeIfAbsent(key, k -> new ArrayList<>());
+		list.add(ms);
+		return list.size() > config.spamMessages();
 	}
 	
 	public Player getPlayerFromUsername(String username) {
