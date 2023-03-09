@@ -1,13 +1,15 @@
 package com.ttsplugin.main;
 
+import lombok.Value;
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.util.Text;
 
+@Value
 public class Dialog {
-	public String message;
-	public String sender;
+	String message;
+	String sender;
 	
 	public Dialog(String message, String sender) {
 		this.message = Text.sanitizeMultilineText(
@@ -42,15 +44,5 @@ public class Dialog {
 	
 	private static boolean isVisible(Widget widget) {
 		return widget != null && !widget.isHidden();
-	}
-	
-	@Override
-	public boolean equals(Object other2) {
-		if (other2 == null) {
-			return false;
-		}
-		
-		Dialog other = (Dialog)other2;
-		return this.message.equals(other.message) && this.sender.equals(other.sender);
 	}
 }

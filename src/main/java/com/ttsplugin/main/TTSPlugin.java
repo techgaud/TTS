@@ -113,7 +113,7 @@ public class TTSPlugin extends Plugin {
 		Future<?> future = executor.scheduleWithFixedDelay(() -> {
 			TTSMessage message;
 			while ((message = queue.poll()) != null) {
-				if ((double) Math.abs(message.time - System.currentTimeMillis()) / (double) 1000 <= this.config.queueSeconds()) {
+				if ((double) Math.abs(message.getTime() - System.currentTimeMillis()) / (double) 1000 <= this.config.queueSeconds()) {
 					play(message);
 				}
 			}
@@ -166,7 +166,7 @@ public class TTSPlugin extends Plugin {
 			if (dialog != null && !dialog.equals(lastDialog)) {
 				Clip current = this.currentClip;
 				if (current != null) current.stop();
-				processMessage(dialog.message, dialog.sender, MessageType.DIALOG);
+				processMessage(dialog.getMessage(), dialog.getSender(), MessageType.DIALOG);
 			}
 			
 			lastDialog = dialog;
@@ -270,7 +270,7 @@ public class TTSPlugin extends Plugin {
 	 */
 	private void play(TTSMessage message) {
 		try {
-			String request = "https://ttsplugin.com?m=" + URLEncoder.encode(message.message, "UTF-8") + "&r=" + config.rate() + "&v=" + message.voice;
+			String request = "https://ttsplugin.com?m=" + URLEncoder.encode(message.getMessage(), "UTF-8") + "&r=" + config.rate() + "&v=" + message.getVoice();
 
 			byte[] bytes;
 			try (InputStream stream = new URL(request).openConnection().getInputStream()) {
@@ -283,7 +283,7 @@ public class TTSPlugin extends Plugin {
 					currentClip = clip;
 
 					if (config.distanceVolume()) {
-						Utils.setClipVolume((config.volume() / (float) 10) - ((float) message.distance / (float) config.distanceVolumeEffect()), clip);
+						Utils.setClipVolume((config.volume() / (float) 10) - ((float) message.getDistance() / (float) config.distanceVolumeEffect()), clip);
 					} else {
 						Utils.setClipVolume(config.volume() / (float) 10, clip);
 					}

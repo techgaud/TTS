@@ -1,14 +1,10 @@
 package com.ttsplugin.main;
 
+import lombok.Value;
+
+@Value
 public class TTSMessage {
-	public String message;
-	public int voice, distance;
-	public long time;
-	
-	public TTSMessage(String message, int voice, int distance, long time) {
-		this.message = message;
-		this.voice = voice;
-		this.distance = distance;
-		this.time = time;
-	}
+	String message;
+	int voice, distance;
+	long time;
 }
