@@ -18,6 +18,7 @@ import net.runelite.api.MenuAction;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.widgets.Widget;
@@ -37,6 +38,7 @@ import javax.inject.Inject;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
@@ -59,7 +61,7 @@ public class TTSPlugin extends Plugin {
 	private final BlockingQueue<TTSMessage> queue = new LinkedBlockingQueue<>();
 	private long lastProcess;
 	private Dialog lastDialog;
-	private volatile Clip currentClip;
+	private final AtomicReference<Clip> currentClip = new AtomicReference<>();
 	private final AtomicReference<Future<?>> queueTask = new AtomicReference<>();
 
 	@Inject
@@ -112,7 +114,7 @@ public class TTSPlugin extends Plugin {
 		// New task for playing messages from queue. this will be terminated when the plugin is disabled
 		Future<?> future = executor.scheduleWithFixedDelay(() -> {
 			TTSMessage message;
-			while ((message = queue.poll()) != null) {
+			while (currentClip.get() == null && (message = queue.poll()) != null) {
 				if ((double) Math.abs(message.getTime() - System.currentTimeMillis()) / (double) 1000 <= this.config.queueSeconds()) {
 					play(message);
 				}
@@ -130,7 +132,7 @@ public class TTSPlugin extends Plugin {
 		lastProcess = 0;
 		lastDialog = null;
 		menuOpenPoint = null;
-		currentClip = null;
+		stopClip();
 
 		// Terminate queue task
 		queue.clear();
@@ -164,8 +166,7 @@ public class TTSPlugin extends Plugin {
 			Dialog dialog = Dialog.getCurrentDialog(client);
 
 			if (dialog != null && !dialog.equals(lastDialog)) {
-				Clip current = this.currentClip;
-				if (current != null) current.stop();
+				stopClip();
 				processMessage(dialog.getMessage(), dialog.getSender(), MessageType.DIALOG);
 			}
 			
@@ -186,6 +187,14 @@ public class TTSPlugin extends Plugin {
 		// If the menu is not open (clicking on something), only say it if it is not Walk, Cancel, or a dialog option
 		if (this.client.isMenuOpen() || blacklist) {
 			this.sayMenuOptionClicked(menuOptionClicked);
+		}
+	}
+
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event) {
+		if (event.getGameState() == GameState.LOGIN_SCREEN) {
+			queue.clear();
+			stopClip();
 		}
 	}
 
@@ -278,30 +287,36 @@ public class TTSPlugin extends Plugin {
 			}
 
 			try (AudioInputStream inputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes))) {
-				try (Clip clip = AudioSystem.getClip()) {
-					clip.open(inputStream);
-					currentClip = clip;
+				Clip clip = AudioSystem.getClip();
+				clip.open(inputStream);
+				currentClip.set(clip);
 
-					if (config.distanceVolume()) {
-						Utils.setClipVolume((config.volume() / (float) 10) - ((float) message.getDistance() / (float) config.distanceVolumeEffect()), clip);
-					} else {
-						Utils.setClipVolume(config.volume() / (float) 10, clip);
-					}
-
-					clip.start();
-					do {
-						Utils.sleep(50);
-						if (client.getGameState() == GameState.LOGIN_SCREEN || queueTask.get() == null) {
-							clip.stop();
-							break;
-						}
-					} while (clip.isRunning());
-
-					currentClip = null;
+				if (config.distanceVolume()) {
+					Utils.setClipVolume((config.volume() / (float) 10) - ((float) message.getDistance() / (float) config.distanceVolumeEffect()), clip);
+				} else {
+					Utils.setClipVolume(config.volume() / (float) 10, clip);
 				}
+
+				clip.addLineListener(event -> {
+					LineEvent.Type type = event.getType();
+					if (type == LineEvent.Type.STOP) {
+						currentClip.compareAndSet(clip, null);
+					}
+				});
+
+				clip.start();
 			}
 		} catch (Exception e) {
+			stopClip();
 			log.warn("Failed to play clip", e);
+		}
+	}
+
+	private void stopClip() {
+		Clip clip = currentClip.getAndSet(null);
+		if (clip != null) {
+			clip.stop();
+			clip.close();
 		}
 	}
 	
