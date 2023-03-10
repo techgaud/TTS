@@ -1,5 +1,6 @@
 package com.ttsplugin.main;
 
+import com.google.common.io.ByteStreams;
 import com.google.inject.Provides;
 import com.ttsplugin.enums.Gender;
 import com.ttsplugin.enums.MessageType;
@@ -8,13 +9,20 @@ import com.ttsplugin.utils.Utils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Synchronized;
-import net.runelite.api.*;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
+import net.runelite.api.Client;
+import net.runelite.api.GameState;
+import net.runelite.api.ItemComposition;
+import net.runelite.api.MenuAction;
+import net.runelite.api.Player;
+import net.runelite.api.Point;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.NotificationFired;
@@ -30,21 +38,31 @@ import javax.inject.Inject;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+@Slf4j
 @PluginDescriptor(name = "Text to speech", description = "Text to speech for chat, dialog, menu options and notifications", tags = {"tts", "text", "voice", "chat", "dialog", "speak", "notification"})
 public class TTSPlugin extends Plugin {	
 	private final Map<String, List<Long>> spamHash = new HashMap<>();
-	public List<TTSMessage> queue = new ArrayList<>();
-	public long lastProcess;
-	public Dialog lastDialog;
-	public Clip currentClip;
-	public Thread queueThread;
+	private final BlockingQueue<TTSMessage> queue = new LinkedBlockingQueue<>();
+	private long lastProcess;
+	private Dialog lastDialog;
+	private final AtomicReference<Clip> currentClip = new AtomicReference<>();
+	private final AtomicReference<Future<?>> queueTask = new AtomicReference<>();
 
 	@Inject
 	private Client client;
@@ -54,6 +72,9 @@ public class TTSPlugin extends Plugin {
 
 	@Inject
 	private ItemManager itemManager;
+
+	@Inject
+	private ScheduledExecutorService executor;
 
 	@Inject
 	private KeyManager keyManager;
@@ -90,26 +111,16 @@ public class TTSPlugin extends Plugin {
 		this.keyManager.registerKeyListener(this.quantityHotkeyListener);
 		this.mouseManager.registerMouseListener(this.mouseHandler);
 		
-		//New thread for playing messages from queue. this will be terminated when the plugin is disabled
-		queueThread = new Thread(() -> {
-			while(true) {
-				try {
-					List<TTSMessage> queueCopy = new ArrayList<>(this.queue);
-					for (TTSMessage message : queueCopy) {
-						if ((double)Math.abs(message.time - System.currentTimeMillis()) / (double)1000 <= this.config.queueSeconds()) {
-							play(message);
-						}
-						
-						this.queue.remove(message);
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
+		// New task for playing messages from queue. this will be terminated when the plugin is disabled
+		Future<?> future = executor.scheduleWithFixedDelay(() -> {
+			TTSMessage message;
+			while (currentClip.get() == null && (message = queue.poll()) != null) {
+				if ((double) Math.abs(message.getTime() - System.currentTimeMillis()) / (double) 1000 <= this.config.queueSeconds()) {
+					play(message);
 				}
-				
-				Utils.sleep(50);
 			}
-		});
-		queueThread.start();
+		}, 50, 50, TimeUnit.MILLISECONDS);
+		queueTask.set(future);
 	}
 
 	@Override
@@ -117,10 +128,17 @@ public class TTSPlugin extends Plugin {
 		this.keyManager.unregisterKeyListener(this.hotkeyListener);
 		this.keyManager.unregisterKeyListener(this.quantityHotkeyListener);
 		this.mouseManager.unregisterMouseListener(this.mouseHandler);
-		
-		//Terminate queue thread
-		queueThread.suspend();
-		queueThread = null;
+
+		lastProcess = 0;
+		lastDialog = null;
+		menuOpenPoint = null;
+		stopClip();
+
+		// Terminate queue task
+		queue.clear();
+		Future<?> task = queueTask.getAndSet(null);
+		if (task != null)
+			task.cancel(false);
 	}
 
 	@Provides
@@ -148,8 +166,8 @@ public class TTSPlugin extends Plugin {
 			Dialog dialog = Dialog.getCurrentDialog(client);
 
 			if (dialog != null && !dialog.equals(lastDialog)) {
-				if (currentClip != null) currentClip.stop();
-				processMessage(dialog.message, dialog.sender, MessageType.DIALOG);
+				stopClip();
+				processMessage(dialog.getMessage(), dialog.getSender(), MessageType.DIALOG);
 			}
 			
 			lastDialog = dialog;
@@ -169,6 +187,14 @@ public class TTSPlugin extends Plugin {
 		// If the menu is not open (clicking on something), only say it if it is not Walk, Cancel, or a dialog option
 		if (this.client.isMenuOpen() || blacklist) {
 			this.sayMenuOptionClicked(menuOptionClicked);
+		}
+	}
+
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event) {
+		if (event.getGameState() == GameState.LOGIN_SCREEN) {
+			queue.clear();
+			stopClip();
 		}
 	}
 
@@ -232,13 +258,13 @@ public class TTSPlugin extends Plugin {
 		
 		final int voice2 = voice;
 		final int distance2 = distance;
-		new Thread(() -> {
+		executor.execute(() -> {
 			try {
 				addToQueue(ConvertMessage.convert(message), voice2, distance2);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.warn("Failed to queue message", e);
 			}
-		}).start();
+		});
 	}
 	
 	/**
@@ -251,43 +277,46 @@ public class TTSPlugin extends Plugin {
 	/**
 	 * Plays the text with the specified voice and distance
 	 */
-	public void play(TTSMessage message) {
+	private void play(TTSMessage message) {
 		try {
-			String request = "https://ttsplugin.com?m=" + URLEncoder.encode(message.message, "UTF-8") + "&r=" + config.rate() + "&v=" + message.voice;
+			String request = "https://ttsplugin.com?m=" + URLEncoder.encode(message.getMessage(), "UTF-8") + "&r=" + config.rate() + "&v=" + message.getVoice();
 
-		    URLConnection conn = new URL(request).openConnection();
-		    byte[] bytes = new byte[conn.getContentLength()];
-		    InputStream stream = conn.getInputStream();
-		    for (int i = 0; i < conn.getContentLength(); i++) {
-		    	bytes[i] = (byte)stream.read();
-		    }
-		    
-			AudioInputStream inputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes));
-			
-			Clip clip = AudioSystem.getClip();
-	        clip.open(inputStream);
-	        currentClip = clip;
-	        
-	        if (config.distanceVolume()) {
-	        	Utils.setClipVolume((config.volume() / (float)10) - ((float)message.distance / (float)config.distanceVolumeEffect()), clip);
-	        } else {
-	        	Utils.setClipVolume(config.volume() / (float)10, clip);
-	        }
-	        
-	        clip.start();
-			Utils.sleep(50);
-			
-			while(clip.isRunning()) {
-				Utils.sleep(50);
-				if (client.getGameState() == GameState.LOGIN_SCREEN || queueThread == null) {
-					clip.stop();
-					break;
-				}
+			byte[] bytes;
+			try (InputStream stream = new URL(request).openConnection().getInputStream()) {
+				bytes = ByteStreams.toByteArray(stream);
 			}
 
-			clip.close();
+			try (AudioInputStream inputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes))) {
+				Clip clip = AudioSystem.getClip();
+				clip.open(inputStream);
+				currentClip.set(clip);
+
+				if (config.distanceVolume()) {
+					Utils.setClipVolume((config.volume() / (float) 10) - ((float) message.getDistance() / (float) config.distanceVolumeEffect()), clip);
+				} else {
+					Utils.setClipVolume(config.volume() / (float) 10, clip);
+				}
+
+				clip.addLineListener(event -> {
+					LineEvent.Type type = event.getType();
+					if (type == LineEvent.Type.STOP) {
+						currentClip.compareAndSet(clip, null);
+					}
+				});
+
+				clip.start();
+			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			stopClip();
+			log.warn("Failed to play clip", e);
+		}
+	}
+
+	private void stopClip() {
+		Clip clip = currentClip.getAndSet(null);
+		if (clip != null) {
+			clip.stop();
+			clip.close();
 		}
 	}
 	
@@ -333,13 +362,13 @@ public class TTSPlugin extends Plugin {
 		return list.size() > config.spamMessages();
 	}
 	
-	public Player getPlayerFromUsername(String username) {
+	private Player getPlayerFromUsername(String username) {
+		String sanitized = Text.sanitize(username);
 		for (Player player : client.getCachedPlayers()) {
-			if (player != null && player.getName() != null && Text.sanitize(player.getName()).equals(Text.sanitize(username))) {
+			if (player != null && player.getName() != null && Text.sanitize(player.getName()).equals(sanitized)) {
 				return player;
 			}
 		}
-		
 		return null;
 	}
 

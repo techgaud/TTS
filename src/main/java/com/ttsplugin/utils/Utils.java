@@ -4,14 +4,6 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.FloatControl;
 
 public class Utils {
-	public static void sleep(int ms) {
-		try {
-			Thread.sleep(ms);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
 	public static String toLowerCaseWithFirstUppercase(String text) {
 		String first = text.substring(0, 1).toUpperCase();
 		return first + text.toLowerCase().substring(1);
