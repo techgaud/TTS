@@ -19,29 +19,26 @@ public class Dialog {
 				// The synthesizer seems to treat an ellipsis as nothing. Replace it with a period.
 				.replaceAll("\\.\\.\\.", ". ")
 		);
+
 		this.sender = sender;
 	}
 	
 	public static Dialog getCurrentDialog(Client client) {
 		if (isVisible(client.getWidget(WidgetInfo.DIALOG_PLAYER_TEXT))) {
-			return new Dialog(getWidgetText(client.getWidget(WidgetInfo.DIALOG_PLAYER_TEXT)), client.getLocalPlayer().getName());
+			return new Dialog(client.getWidget(WidgetInfo.DIALOG_PLAYER_TEXT).getText(), client.getLocalPlayer().getName());
 		} else if (isVisible(client.getWidget(WidgetInfo.DIALOG_NPC_TEXT))) {
-			return new Dialog(getWidgetText(client.getWidget(WidgetInfo.DIALOG_NPC_TEXT)), getWidgetText(client.getWidget(WidgetInfo.DIALOG_NPC_NAME)));
+			return new Dialog(client.getWidget(WidgetInfo.DIALOG_NPC_TEXT).getText(), client.getWidget(WidgetInfo.DIALOG_NPC_NAME).getText());
 		} else if (isVisible(client.getWidget(WidgetInfo.DIALOG_OPTION_OPTIONS))) {
-			return new Dialog(getWidgetText(client.getWidget(WidgetInfo.DIALOG_OPTION_OPTIONS)), "");
+			return new Dialog(client.getWidget(WidgetInfo.DIALOG_OPTION_OPTIONS).getText(), "");
 		} else if (isVisible(client.getWidget(WidgetInfo.LEVEL_UP_SKILL))) {
-			return new Dialog(getWidgetText(client.getWidget(WidgetInfo.LEVEL_UP_SKILL)), getWidgetText(client.getWidget(WidgetInfo.LEVEL_UP_LEVEL)));
+			return new Dialog(client.getWidget(WidgetInfo.LEVEL_UP_SKILL).getText(), client.getWidget(WidgetInfo.LEVEL_UP_LEVEL).getText());
 		} else if (isVisible(client.getWidget(WidgetInfo.PACK(229, 1)))) { // Cat age
-			return new Dialog(getWidgetText(client.getWidget(WidgetInfo.PACK(229, 1))), "");
+			return new Dialog(client.getWidget(WidgetInfo.PACK(229, 1)).getText(), "");
 		} else {
 			return null;
 		}
 	}
-	
-	private static String getWidgetText(Widget widget) {
-		return widget != null ? widget.getText() : null;
-	}
-	
+
 	private static boolean isVisible(Widget widget) {
 		return widget != null && !widget.isHidden();
 	}

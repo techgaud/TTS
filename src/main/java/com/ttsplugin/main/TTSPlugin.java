@@ -6,17 +6,12 @@ import com.ttsplugin.enums.Gender;
 import com.ttsplugin.enums.MessageType;
 import com.ttsplugin.enums.Voice;
 import com.ttsplugin.utils.Utils;
+import jaco.mp3.player.MP3Player;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.ItemComposition;
-import net.runelite.api.MenuAction;
-import net.runelite.api.Player;
-import net.runelite.api.Point;
+import net.runelite.api.*;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -33,25 +28,25 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.util.HotkeyListener;
 import net.runelite.client.util.Text;
+import org.apache.commons.text.StringEscapeUtils;
 
 import javax.inject.Inject;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import javax.swing.*;
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
@@ -64,31 +59,19 @@ public class TTSPlugin extends Plugin {
 	private final AtomicReference<Clip> currentClip = new AtomicReference<>();
 	private final AtomicReference<Future<?>> queueTask = new AtomicReference<>();
 
-	@Inject
-	private Client client;
-	
-	@Inject
-	private TTSConfig config;
+	@Inject private Client client;
+	@Inject private TTSConfig config;
+	@Inject private ItemManager itemManager;
 
-	@Inject
-	private ItemManager itemManager;
+	@Inject private ScheduledExecutorService executor;
 
-	@Inject
-	private ScheduledExecutorService executor;
+	@Inject private KeyManager keyManager;
+	@Inject private KeyboardHandler keyboardHandler;
 
-	@Inject
-	private KeyManager keyManager;
-	@Inject
-	private KeyboardHandler keyboardHandler;
+	@Inject private MouseManager mouseManager;
+	@Inject private MouseHandler mouseHandler;
 
-	@Inject
-	private MouseManager mouseManager;
-	@Inject
-	private MouseHandler mouseHandler;
-
-	@Getter
-	@Setter
-	private Point menuOpenPoint;
+	@Getter @Setter private Point menuOpenPoint;
 
 	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> this.config.narrateHotkey()) {
 		@Override
@@ -279,6 +262,51 @@ public class TTSPlugin extends Plugin {
 	 */
 	private void play(TTSMessage message) {
 		try {
+			if (message.getVoice() == Voice.SUSAN.id && config.altTool().equals("Brian5")) {
+				//Get tts code
+				String text = message.getMessage();
+				text = StringEscapeUtils.escapeHtml4(text);
+				System.out.println(text);
+
+				String json = "[{\"voiceId\":\"Amazon British English (Brian)\",\"ssml\":\"<speak version=\\\"1.0\\\" xml:lang=\\\"en-GB\\\"><prosody volume='default' rate='medium' pitch='default'>" + text + "</prosody></speak>\"}]";
+				URL url = new URL("https://support.readaloud.app/ttstool/createParts");
+
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("POST");
+				connection.setRequestProperty("Content-Type", "application/json");
+				connection.setDoOutput(true);
+
+				try (OutputStream os = connection.getOutputStream()) {
+					byte[] input = json.getBytes(StandardCharsets.UTF_8);
+					os.write(input, 0, input.length);
+				}
+
+				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				String ttsCode = reader.readLine().replace("[\"", "").replace("\"]", "");
+				reader.close();
+				connection.disconnect();
+
+				//Now get mp3 bytes
+				byte[] bytes;
+				try (InputStream stream = new URL("https://support.readaloud.app/ttstool/getParts?q=" + ttsCode).openConnection().getInputStream()) {
+					bytes = ByteStreams.toByteArray(stream);
+				}
+
+				//Save mp3 to temp file, player can only play from file :(
+				File file = new File(System.getProperty("java.io.tmpdir") + "/ttsbriantemp.mp3");
+				file.delete();
+				file.createNewFile();
+				Files.write(file.toPath(), bytes);
+
+				//Play mp3, file doesn't get deleted, but it gets overwritten every time so its no issue
+				SwingUtilities.invokeLater(() -> {
+					MP3Player mp3Player = new MP3Player(file);
+					mp3Player.play();
+				});
+
+				return;
+			}
+
 			String request = "https://ttsplugin.com?m=" + URLEncoder.encode(message.getMessage(), "UTF-8") + "&r=" + config.rate() + "&v=" + message.getVoice();
 
 			byte[] bytes;

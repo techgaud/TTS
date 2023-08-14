@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConvertMessage {
-	
 	/**
 	 * Changes the message, so it will be spelled better by the tts
 	 * By changing shortens and stuff.
@@ -78,12 +77,7 @@ public class ConvertMessage {
 			this.replacement = replacement;
 			list.add(this);
 		}
-		
-		public Convert(ConvertMode mode, boolean caseSensitive, String target, String replacement) {
-			this(mode, target, replacement);
-			this.caseSensitive = caseSensitive;
-		}
-		
+
 		public String convert(String input) {
 			if (!this.caseSensitive) {
 				input = input.toLowerCase();
@@ -118,8 +112,8 @@ public class ConvertMessage {
 	}
 	
 	public enum ConvertMode {
-		REPLACE_TEXT(),
-		REPLACE_WORD(),
-		REPLACE_TEXT_AFTER_NUMBER_IN_WORD(),
+		REPLACE_TEXT,
+		REPLACE_WORD,
+		REPLACE_TEXT_AFTER_NUMBER_IN_WORD
 	}
 }

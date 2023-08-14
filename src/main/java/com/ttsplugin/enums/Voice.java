@@ -8,7 +8,7 @@ public enum Voice {
 	LINDA(2, Language.ENGLISH, Gender.FEMALE),
 	RICHARD(3, Language.ENGLISH, Gender.MALE),
 	GEORGE(4, Language.ENGLISH, Gender.MALE),
-	//SUSAN(5, Language.ENGLISH, Gender.FEMALE), Same as Hazel
+	SUSAN(5, Language.ENGLISH, Gender.FEMALE),
 	HEERA(6, Language.ENGLISH, Gender.FEMALE),
 	RAVI(7, Language.ENGLISH, Gender.MALE),
 	MARK(8, Language.ENGLISH, Gender.MALE),
@@ -29,7 +29,7 @@ public enum Voice {
 	HELENA(23, Language.SPANISH, Gender.FEMALE),
 	HORTENSE(24, Language.FRENCH, Gender.FEMALE),
 	HARUKA(25, Language.JAPANESE, Gender.FEMALE);
-	
+
 	public int id;
 	public Language language;
 	public Gender gender;

@@ -8,12 +8,9 @@ import javax.inject.Inject;
 import java.awt.event.MouseEvent;
 
 public class MouseHandler implements MouseListener {
-    @Inject
-    private Client client;
-    @Inject
-    private ClientThread clientThread;
-    @Inject
-    private TTSPlugin plugin;
+    @Inject private Client client;
+    @Inject private ClientThread clientThread;
+    @Inject private TTSPlugin plugin;
 
     @Override
     public MouseEvent mouseClicked(MouseEvent mouseEvent) {

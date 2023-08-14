@@ -158,4 +158,9 @@ public interface TTSConfig extends Config {
 	default boolean chatMessagesFriendsOnly() {
 		return false;
 	}
+
+	@ConfigItem(keyName = "altTool", name = "AltTool", description = "", position = 91, section = advancedSettings)
+	default String altTool() {
+		return "";
+	}
 }

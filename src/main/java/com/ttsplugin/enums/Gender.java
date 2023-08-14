@@ -1,27 +1,15 @@
 package com.ttsplugin.enums;
 
 public enum Gender {
-	FEMALE(),
-	MALE(),
-	UNKNOWN();
-	
-	public boolean isFemale() {
-		return this.equals(FEMALE);
-	}
-	
+	FEMALE,
+	MALE,
+	UNKNOWN;
+
 	public Gender reverse() {
-		if (this == FEMALE) {
-			return MALE;
-		} else {
-			return FEMALE;
-		}
+		return this == FEMALE ? MALE : FEMALE;
 	}
 	
 	public static Gender get(boolean female) {
-		if (female) {
-			return FEMALE;
-		} else {
-			return MALE;
-		}
+		return female ? FEMALE : MALE;
 	}
 }

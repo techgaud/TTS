@@ -19,14 +19,10 @@ public class KeyboardHandler {
     private static final int MENU_EXTRA_BOTTOM = 3;
     private static final int MENU_BORDERS_TOTAL = MENU_EXTRA_TOP + MENU_OPTION_HEIGHT + MENU_EXTRA_BOTTOM;
 
-    @Inject
-    private Client client;
-    @Inject
-    private ClientThread clientThread;
-    @Inject
-    private TTSPlugin plugin;
-    @Inject
-    private TTSConfig config;
+    @Inject private Client client;
+    @Inject private ClientThread clientThread;
+    @Inject private TTSPlugin plugin;
+    @Inject private TTSConfig config;
 
     public void handleHotkey(Keybind keybind) {
         // This solves an issue where sometimes client.getMenuEntries().last() was "Examine object-behind-widget" ¯\_(ツ)_/¯
