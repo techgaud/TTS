@@ -266,7 +266,7 @@ public class TTSPlugin extends Plugin {
 		try {
 			if (message.getVoice() == Voice.SUSAN.id && config.altTool().equals("Brian5")) {
 				//Get tts code
-				String text = message.getMessage();
+				String text = Text.removeTags(message.getMessage());
 				text = StringEscapeUtils.escapeHtml4(text);
 				System.out.println(text);
 
