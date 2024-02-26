@@ -73,6 +73,8 @@ public class TTSPlugin extends Plugin {
 
 	@Getter @Setter private Point menuOpenPoint;
 
+	private MP3Player jacoPlayer;
+
 	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> this.config.narrateHotkey()) {
 		@Override
 		public void hotkeyPressed() {
@@ -300,7 +302,8 @@ public class TTSPlugin extends Plugin {
 
 				//Play mp3, file doesn't get deleted, but it gets overwritten every time so its no issue
 				SwingUtilities.invokeLater(() -> {
-					MP3Player mp3Player = new MP3Player(file);
+					MP3Player mp3Player = getJacoPlayer();
+					mp3Player.add(file);
 					mp3Player.play();
 				});
 
@@ -345,6 +348,10 @@ public class TTSPlugin extends Plugin {
 		if (clip != null) {
 			clip.stop();
 			clip.close();
+		}
+
+		if (jacoPlayer != null) {
+			jacoPlayer.stop();
 		}
 	}
 	
@@ -433,4 +440,18 @@ public class TTSPlugin extends Plugin {
 		
 		processMessage(actionName + " " + itemName, MessageType.ACCESSIBILITY);
 	}
+
+	private MP3Player getJacoPlayer() {
+		MP3Player player = this.jacoPlayer;
+		if (player == null) {
+			synchronized (this) {
+				player = this.jacoPlayer;
+				if (player == null) {
+					player = this.jacoPlayer = new MP3Player();
+				}
+			}
+		}
+		return player;
+	}
+
 }
