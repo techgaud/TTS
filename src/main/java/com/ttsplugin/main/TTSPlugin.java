@@ -149,7 +149,7 @@ public class TTSPlugin extends Plugin {
 			Dialog dialog = Dialog.getCurrentDialog(client);
 
 			if (dialog != null && !dialog.equals(lastDialog)) {
-				stopClip();
+				executor.execute(this::stopClip);
 				processMessage(dialog.getMessage(), dialog.getSender(), MessageType.DIALOG);
 			}
 			
@@ -266,7 +266,7 @@ public class TTSPlugin extends Plugin {
 				//Get tts code
 				String text = message.getMessage();
 				text = StringEscapeUtils.escapeHtml4(text);
-				System.out.println(text);
+				log.debug(text);
 
 				String json = "[{\"voiceId\":\"Amazon British English (Brian)\",\"ssml\":\"<speak version=\\\"1.0\\\" xml:lang=\\\"en-GB\\\"><prosody volume='default' rate='medium' pitch='default'>" + text + "</prosody></speak>\"}]";
 				URL url = new URL("https://support.readaloud.app/ttstool/createParts");
