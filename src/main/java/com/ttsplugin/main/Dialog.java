@@ -16,28 +16,36 @@ public class Dialog {
 		this.message = Text.sanitizeMultilineText(
 			message
 				// Replace hyphens with spaces. It has trouble processing utterances.
-				.replaceAll("-", " ")
+				.replace('-', ' ')
 				// The synthesizer seems to treat an ellipsis as nothing. Replace it with a period.
-				.replaceAll("\\.\\.\\.", ". ")
+				.replace("...", ". ")
 		);
 
 		this.sender = sender;
 	}
 	
 	public static Dialog getCurrentDialog(Client client) {
-		if (isVisible(client.getWidget(ComponentID.DIALOG_PLAYER_TEXT))) {
-			return new Dialog(client.getWidget(ComponentID.DIALOG_PLAYER_TEXT).getText(), client.getLocalPlayer().getName());
-		} else if (isVisible(client.getWidget(ComponentID.DIALOG_NPC_TEXT))) {
-			return new Dialog(client.getWidget(ComponentID.DIALOG_NPC_TEXT).getText(), client.getWidget(ComponentID.DIALOG_NPC_NAME).getText());
-		} else if (isVisible(client.getWidget(ComponentID.DIALOG_OPTION_OPTIONS))) {
-			return new Dialog(client.getWidget(ComponentID.DIALOG_OPTION_OPTIONS).getText(), "");
-		} else if (isVisible(client.getWidget(ComponentID.LEVEL_UP_SKILL))) {
-			return new Dialog(client.getWidget(ComponentID.LEVEL_UP_SKILL).getText(), client.getWidget(ComponentID.LEVEL_UP_LEVEL).getText());
-		} else if (isVisible(client.getWidget(WidgetUtil.packComponentId(229, 1)))) { // Cat age
-			return new Dialog(client.getWidget(WidgetUtil.packComponentId(229, 1)).getText(), "");
-		} else {
-			return null;
+		Widget playerText = client.getWidget(ComponentID.DIALOG_PLAYER_TEXT);
+		if (isVisible(playerText)) {
+			return new Dialog(playerText.getText(), client.getLocalPlayer().getName());
 		}
+		Widget npcText = client.getWidget(ComponentID.DIALOG_NPC_TEXT);
+		if (isVisible(npcText)) {
+			return new Dialog(npcText.getText(), client.getWidget(ComponentID.DIALOG_NPC_NAME).getText());
+		}
+		Widget dialogOptions = client.getWidget(ComponentID.DIALOG_OPTION_OPTIONS);
+		if (isVisible(dialogOptions)) {
+			return new Dialog(dialogOptions.getText(), "");
+		}
+		Widget levelSkill = client.getWidget(ComponentID.LEVEL_UP_SKILL);
+		if (isVisible(levelSkill)) {
+			return new Dialog(levelSkill.getText(), client.getWidget(ComponentID.LEVEL_UP_LEVEL).getText());
+		}
+		Widget catAge = client.getWidget(WidgetUtil.packComponentId(229, 1));
+		if (isVisible(catAge)) {
+			return new Dialog(catAge.getText(), "");
+		}
+		return null;
 	}
 
 	private static boolean isVisible(Widget widget) {
