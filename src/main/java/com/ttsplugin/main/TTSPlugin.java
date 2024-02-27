@@ -73,7 +73,7 @@ public class TTSPlugin extends Plugin {
 
 	@Getter @Setter private Point menuOpenPoint;
 
-	private MP3Player jacoPlayer;
+	private volatile MP3Player jacoPlayer;
 
 	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> this.config.narrateHotkey()) {
 		@Override
