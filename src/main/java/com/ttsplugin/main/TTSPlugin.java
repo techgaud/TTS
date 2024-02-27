@@ -362,7 +362,11 @@ public class TTSPlugin extends Plugin {
 		}
 
 		if (jacoPlayer != null) {
-			jacoPlayer.stop();
+			// noinspection SynchronizeOnNonFinalField
+			synchronized (jacoPlayer) {
+				jacoPlayer.stop();
+				jacoPlayer.getPlayList().clear();
+			}
 		}
 	}
 	
