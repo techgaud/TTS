@@ -16,8 +16,9 @@ import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetInfo;
+import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.NotificationFired;
@@ -406,9 +407,9 @@ public class TTSPlugin extends Plugin {
 		final Widget widget = this.client.getWidget(menuOptionClicked.getParam1());
 		if (widget != null) {
 			if (widget.getChildren() != null) {
-				if (widget.getParent().getId() == WidgetInfo.BANK_PIN_CONTAINER.getId()) {
+				if (widget.getParent().getId() == ComponentID.BANK_PIN_CONTAINER) {
 					actionName = widget.getChild(1).getText();
-				} else if (widget.getId() == WidgetInfo.PACK(553, 14)) { // Report reason
+				} else if (widget.getId() == WidgetUtil.packComponentId(553, 14)) { // Report reason
 					actionName = widget.getChild(menuOptionClicked.getParam0() + 1).getText() + " " +
 						widget.getChild(menuOptionClicked.getParam0() + 2).getText();
 					// In bank ui (maybe other things too like deposit boxes or things like that?)
@@ -418,10 +419,10 @@ public class TTSPlugin extends Plugin {
 						itemName = this.itemManager.getItemComposition(child.getItemId()).getName();
 					}
 				}
-			} else if (widget.getParent().getId() == WidgetInfo.PACK(553, 7)) { // Report add to ignore
+			} else if (widget.getParent().getId() == WidgetUtil.packComponentId(553, 7)) { // Report add to ignore
 				actionName = this.client.getWidget(553, 8).getText();
 				// normal inventory
-			} else if (widget.getId() == WidgetInfo.INVENTORY.getId()) {
+			} else if (widget.getId() == ComponentID.INVENTORY_CONTAINER) {
 				int itemID = widget.getItemId();
 				ItemComposition item = this.itemManager.getItemComposition(itemID);
 				itemName = item.getName();
