@@ -98,6 +98,17 @@ public class TTSPlugin extends Plugin {
 		
 		// New task for playing messages from queue. this will be terminated when the plugin is disabled
 		Future<?> future = executor.scheduleWithFixedDelay(() -> {
+			if (jacoPlayer != null) {
+				if (jacoPlayer.isPlaying()) {
+					return;
+				} else {
+					// noinspection SynchronizeOnNonFinalField
+					synchronized (jacoPlayer) {
+						jacoPlayer.getPlayList().clear();
+					}
+				}
+			}
+
 			TTSMessage message;
 			while (currentClip.get() == null && (message = queue.poll()) != null) {
 				if ((double) Math.abs(message.getTime() - System.currentTimeMillis()) / (double) 1000 <= this.config.queueSeconds()) {
