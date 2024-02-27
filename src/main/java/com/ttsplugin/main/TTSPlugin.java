@@ -96,10 +96,23 @@ public class TTSPlugin extends Plugin {
 		
 		// New task for playing messages from queue. this will be terminated when the plugin is disabled
 		Future<?> future = executor.scheduleWithFixedDelay(() -> {
+			Clip clip = currentClip.get();
+			if (clip != null) {
+				if (clip.isRunning()) {
+					return;
+				} else {
+					clip.close();
+					if (!currentClip.compareAndSet(clip, null)) {
+						return;
+					}
+				}
+			}
+
 			TTSMessage message;
-			while (currentClip.get() == null && (message = queue.poll()) != null) {
+			while ((message = queue.poll()) != null) {
 				if ((double) Math.abs(message.getTime() - System.currentTimeMillis()) / (double) 1000 <= this.config.queueSeconds()) {
 					play(message);
+					break;
 				}
 			}
 		}, 50, 50, TimeUnit.MILLISECONDS);
