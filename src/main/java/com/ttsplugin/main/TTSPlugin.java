@@ -34,7 +34,6 @@ import javax.inject.Inject;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineEvent;
 import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -337,13 +336,6 @@ public class TTSPlugin extends Plugin {
 				} else {
 					Utils.setClipVolume(config.volume() / (float) 10, clip);
 				}
-
-				clip.addLineListener(event -> {
-					LineEvent.Type type = event.getType();
-					if (type == LineEvent.Type.STOP) {
-						currentClip.compareAndSet(clip, null);
-					}
-				});
 
 				clip.start();
 			}
