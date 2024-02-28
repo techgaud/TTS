@@ -328,8 +328,11 @@ public class TTSPlugin extends Plugin {
 
 			try (AudioInputStream inputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes))) {
 				Clip clip = AudioSystem.getClip();
+				if (!currentClip.compareAndSet(null, clip)) {
+					clip.close();
+					return;
+				}
 				clip.open(inputStream);
-				currentClip.set(clip);
 
 				if (config.distanceVolume()) {
 					Utils.setClipVolume((config.volume() / (float) 10) - ((float) message.getDistance() / (float) config.distanceVolumeEffect()), clip);
