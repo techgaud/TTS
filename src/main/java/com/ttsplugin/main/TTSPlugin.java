@@ -73,6 +73,8 @@ public class TTSPlugin extends Plugin {
 
 	@Getter @Setter private Point menuOpenPoint;
 
+	private volatile MP3Player jacoPlayer;
+
 	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> this.config.narrateHotkey()) {
 		@Override
 		public void hotkeyPressed() {
@@ -96,6 +98,17 @@ public class TTSPlugin extends Plugin {
 		
 		// New task for playing messages from queue. this will be terminated when the plugin is disabled
 		Future<?> future = executor.scheduleWithFixedDelay(() -> {
+			if (jacoPlayer != null) {
+				if (jacoPlayer.isPlaying()) {
+					return;
+				} else {
+					// noinspection SynchronizeOnNonFinalField
+					synchronized (jacoPlayer) {
+						jacoPlayer.getPlayList().clear();
+					}
+				}
+			}
+
 			TTSMessage message;
 			while (currentClip.get() == null && (message = queue.poll()) != null) {
 				if ((double) Math.abs(message.getTime() - System.currentTimeMillis()) / (double) 1000 <= this.config.queueSeconds()) {
@@ -264,7 +277,7 @@ public class TTSPlugin extends Plugin {
 		try {
 			if (message.getVoice() == Voice.SUSAN.id && config.altTool().equals("Brian5")) {
 				//Get tts code
-				String text = message.getMessage();
+				String text = Text.removeTags(message.getMessage());
 				text = StringEscapeUtils.escapeHtml4(text);
 				log.debug(text);
 
@@ -300,7 +313,8 @@ public class TTSPlugin extends Plugin {
 
 				//Play mp3, file doesn't get deleted, but it gets overwritten every time so its no issue
 				SwingUtilities.invokeLater(() -> {
-					MP3Player mp3Player = new MP3Player(file);
+					MP3Player mp3Player = getJacoPlayer();
+					mp3Player.add(file);
 					mp3Player.play();
 				});
 
@@ -345,6 +359,14 @@ public class TTSPlugin extends Plugin {
 		if (clip != null) {
 			clip.stop();
 			clip.close();
+		}
+
+		if (jacoPlayer != null) {
+			// noinspection SynchronizeOnNonFinalField
+			synchronized (jacoPlayer) {
+				jacoPlayer.stop();
+				jacoPlayer.getPlayList().clear();
+			}
 		}
 	}
 	
@@ -433,4 +455,18 @@ public class TTSPlugin extends Plugin {
 		
 		processMessage(actionName + " " + itemName, MessageType.ACCESSIBILITY);
 	}
+
+	private MP3Player getJacoPlayer() {
+		MP3Player player = this.jacoPlayer;
+		if (player == null) {
+			synchronized (this) {
+				player = this.jacoPlayer;
+				if (player == null) {
+					player = this.jacoPlayer = new MP3Player();
+				}
+			}
+		}
+		return player;
+	}
+
 }
