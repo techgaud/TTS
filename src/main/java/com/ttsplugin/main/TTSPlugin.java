@@ -114,10 +114,8 @@ public class TTSPlugin extends Plugin {
 				if (jacoPlayer.isPlaying()) {
 					return;
 				} else {
-					// noinspection SynchronizeOnNonFinalField
-					synchronized (jacoPlayer) {
-						jacoPlayer.getPlayList().clear();
-					}
+					jacoPlayer.stop();
+					jacoPlayer.getPlayList().clear();
 				}
 			}
 
@@ -141,13 +139,13 @@ public class TTSPlugin extends Plugin {
 		lastProcess = 0;
 		lastDialog = null;
 		menuOpenPoint = null;
-		stopClip();
 
 		// Terminate queue task
 		queue.clear();
 		Future<?> task = queueTask.getAndSet(null);
 		if (task != null)
 			task.cancel(false);
+		stopClip();
 	}
 
 	@Provides
@@ -203,7 +201,7 @@ public class TTSPlugin extends Plugin {
 	public void onGameStateChanged(GameStateChanged event) {
 		if (event.getGameState() == GameState.LOGIN_SCREEN) {
 			queue.clear();
-			stopClip();
+			executor.execute(this::stopClip);
 		}
 	}
 
@@ -370,12 +368,9 @@ public class TTSPlugin extends Plugin {
 			clip.close();
 		}
 
-		if (jacoPlayer != null) {
-			// noinspection SynchronizeOnNonFinalField
-			synchronized (jacoPlayer) {
-				jacoPlayer.stop();
-				jacoPlayer.getPlayList().clear();
-			}
+		if (jacoPlayer != null && jacoPlayer.isPlaying()) {
+			jacoPlayer.stop();
+			jacoPlayer.getPlayList().clear();
 		}
 	}
 	
