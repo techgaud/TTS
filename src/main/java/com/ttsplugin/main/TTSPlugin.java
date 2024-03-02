@@ -35,7 +35,6 @@ import javax.inject.Inject;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineEvent;
 import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -96,24 +95,35 @@ public class TTSPlugin extends Plugin {
 		this.keyManager.registerKeyListener(this.hotkeyListener);
 		this.keyManager.registerKeyListener(this.quantityHotkeyListener);
 		this.mouseManager.registerMouseListener(this.mouseHandler);
-		
+
 		// New task for playing messages from queue. this will be terminated when the plugin is disabled
 		Future<?> future = executor.scheduleWithFixedDelay(() -> {
-			if (jacoPlayer != null) {
-				if (jacoPlayer.isPlaying()) {
+			Clip clip = currentClip.get();
+			if (clip != null) {
+				if (clip.isRunning()) {
 					return;
 				} else {
-					// noinspection SynchronizeOnNonFinalField
-					synchronized (jacoPlayer) {
-						jacoPlayer.getPlayList().clear();
+					clip.close();
+					if (!currentClip.compareAndSet(clip, null)) {
+						return;
 					}
 				}
 			}
 
+			if (jacoPlayer != null) {
+				if (jacoPlayer.isPlaying()) {
+					return;
+				} else {
+					jacoPlayer.stop();
+					jacoPlayer.getPlayList().clear();
+				}
+			}
+
 			TTSMessage message;
-			while (currentClip.get() == null && (message = queue.poll()) != null) {
+			while ((message = queue.poll()) != null) {
 				if ((double) Math.abs(message.getTime() - System.currentTimeMillis()) / (double) 1000 <= this.config.queueSeconds()) {
 					play(message);
+					break;
 				}
 			}
 		}, 50, 50, TimeUnit.MILLISECONDS);
@@ -129,13 +139,13 @@ public class TTSPlugin extends Plugin {
 		lastProcess = 0;
 		lastDialog = null;
 		menuOpenPoint = null;
-		stopClip();
 
 		// Terminate queue task
 		queue.clear();
 		Future<?> task = queueTask.getAndSet(null);
 		if (task != null)
 			task.cancel(false);
+		stopClip();
 	}
 
 	@Provides
@@ -191,7 +201,7 @@ public class TTSPlugin extends Plugin {
 	public void onGameStateChanged(GameStateChanged event) {
 		if (event.getGameState() == GameState.LOGIN_SCREEN) {
 			queue.clear();
-			stopClip();
+			executor.execute(this::stopClip);
 		}
 	}
 
@@ -331,21 +341,17 @@ public class TTSPlugin extends Plugin {
 
 			try (AudioInputStream inputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes))) {
 				Clip clip = AudioSystem.getClip();
+				if (!currentClip.compareAndSet(null, clip)) {
+					clip.close();
+					return;
+				}
 				clip.open(inputStream);
-				currentClip.set(clip);
 
 				if (config.distanceVolume()) {
 					Utils.setClipVolume((config.volume() / (float) 10) - ((float) message.getDistance() / (float) config.distanceVolumeEffect()), clip);
 				} else {
 					Utils.setClipVolume(config.volume() / (float) 10, clip);
 				}
-
-				clip.addLineListener(event -> {
-					LineEvent.Type type = event.getType();
-					if (type == LineEvent.Type.STOP) {
-						currentClip.compareAndSet(clip, null);
-					}
-				});
 
 				clip.start();
 			}
@@ -362,12 +368,9 @@ public class TTSPlugin extends Plugin {
 			clip.close();
 		}
 
-		if (jacoPlayer != null) {
-			// noinspection SynchronizeOnNonFinalField
-			synchronized (jacoPlayer) {
-				jacoPlayer.stop();
-				jacoPlayer.getPlayList().clear();
-			}
+		if (jacoPlayer != null && jacoPlayer.isPlaying()) {
+			jacoPlayer.stop();
+			jacoPlayer.getPlayList().clear();
 		}
 	}
 	
