@@ -95,7 +95,7 @@ public class TTSPlugin extends Plugin {
 		this.keyManager.registerKeyListener(this.hotkeyListener);
 		this.keyManager.registerKeyListener(this.quantityHotkeyListener);
 		this.mouseManager.registerMouseListener(this.mouseHandler);
-		
+
 		// New task for playing messages from queue. this will be terminated when the plugin is disabled
 		Future<?> future = executor.scheduleWithFixedDelay(() -> {
 			Clip clip = currentClip.get();
@@ -106,8 +106,8 @@ public class TTSPlugin extends Plugin {
 					clip.close();
 					if (!currentClip.compareAndSet(clip, null)) {
 						return;
-          }
-        }
+					}
+				}
 			}
 
 			if (jacoPlayer != null) {
@@ -119,7 +119,7 @@ public class TTSPlugin extends Plugin {
 						jacoPlayer.getPlayList().clear();
 					}
 				}
-      }
+			}
 
 			TTSMessage message;
 			while ((message = queue.poll()) != null) {
