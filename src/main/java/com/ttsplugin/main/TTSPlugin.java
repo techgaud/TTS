@@ -16,8 +16,9 @@ import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetInfo;
+import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.NotificationFired;
@@ -72,6 +73,8 @@ public class TTSPlugin extends Plugin {
 
 	@Getter @Setter private Point menuOpenPoint;
 
+	private volatile MP3Player jacoPlayer;
+
 	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> this.config.narrateHotkey()) {
 		@Override
 		public void hotkeyPressed() {
@@ -103,9 +106,20 @@ public class TTSPlugin extends Plugin {
 					clip.close();
 					if (!currentClip.compareAndSet(clip, null)) {
 						return;
+          }
+        }
+			}
+
+			if (jacoPlayer != null) {
+				if (jacoPlayer.isPlaying()) {
+					return;
+				} else {
+					// noinspection SynchronizeOnNonFinalField
+					synchronized (jacoPlayer) {
+						jacoPlayer.getPlayList().clear();
 					}
 				}
-			}
+      }
 
 			TTSMessage message;
 			while ((message = queue.poll()) != null) {
@@ -161,7 +175,7 @@ public class TTSPlugin extends Plugin {
 			Dialog dialog = Dialog.getCurrentDialog(client);
 
 			if (dialog != null && !dialog.equals(lastDialog)) {
-				stopClip();
+				executor.execute(this::stopClip);
 				processMessage(dialog.getMessage(), dialog.getSender(), MessageType.DIALOG);
 			}
 			
@@ -276,9 +290,9 @@ public class TTSPlugin extends Plugin {
 		try {
 			if (message.getVoice() == Voice.SUSAN.id && config.altTool().equals("Brian5")) {
 				//Get tts code
-				String text = message.getMessage();
+				String text = Text.removeTags(message.getMessage());
 				text = StringEscapeUtils.escapeHtml4(text);
-				System.out.println(text);
+				log.debug(text);
 
 				String json = "[{\"voiceId\":\"Amazon British English (Brian)\",\"ssml\":\"<speak version=\\\"1.0\\\" xml:lang=\\\"en-GB\\\"><prosody volume='default' rate='medium' pitch='default'>" + text + "</prosody></speak>\"}]";
 				URL url = new URL("https://support.readaloud.app/ttstool/createParts");
@@ -312,7 +326,8 @@ public class TTSPlugin extends Plugin {
 
 				//Play mp3, file doesn't get deleted, but it gets overwritten every time so its no issue
 				SwingUtilities.invokeLater(() -> {
-					MP3Player mp3Player = new MP3Player(file);
+					MP3Player mp3Player = getJacoPlayer();
+					mp3Player.add(file);
 					mp3Player.play();
 				});
 
@@ -353,6 +368,14 @@ public class TTSPlugin extends Plugin {
 		if (clip != null) {
 			clip.stop();
 			clip.close();
+		}
+
+		if (jacoPlayer != null) {
+			// noinspection SynchronizeOnNonFinalField
+			synchronized (jacoPlayer) {
+				jacoPlayer.stop();
+				jacoPlayer.getPlayList().clear();
+			}
 		}
 	}
 	
@@ -414,9 +437,9 @@ public class TTSPlugin extends Plugin {
 		final Widget widget = this.client.getWidget(menuOptionClicked.getParam1());
 		if (widget != null) {
 			if (widget.getChildren() != null) {
-				if (widget.getParent().getId() == WidgetInfo.BANK_PIN_CONTAINER.getId()) {
+				if (widget.getParent().getId() == ComponentID.BANK_PIN_CONTAINER) {
 					actionName = widget.getChild(1).getText();
-				} else if (widget.getId() == WidgetInfo.PACK(553, 14)) { // Report reason
+				} else if (widget.getId() == WidgetUtil.packComponentId(553, 14)) { // Report reason
 					actionName = widget.getChild(menuOptionClicked.getParam0() + 1).getText() + " " +
 						widget.getChild(menuOptionClicked.getParam0() + 2).getText();
 					// In bank ui (maybe other things too like deposit boxes or things like that?)
@@ -426,10 +449,10 @@ public class TTSPlugin extends Plugin {
 						itemName = this.itemManager.getItemComposition(child.getItemId()).getName();
 					}
 				}
-			} else if (widget.getParent().getId() == WidgetInfo.PACK(553, 7)) { // Report add to ignore
+			} else if (widget.getParent().getId() == WidgetUtil.packComponentId(553, 7)) { // Report add to ignore
 				actionName = this.client.getWidget(553, 8).getText();
 				// normal inventory
-			} else if (widget.getId() == WidgetInfo.INVENTORY.getId()) {
+			} else if (widget.getId() == ComponentID.INVENTORY_CONTAINER) {
 				int itemID = widget.getItemId();
 				ItemComposition item = this.itemManager.getItemComposition(itemID);
 				itemName = item.getName();
@@ -441,4 +464,18 @@ public class TTSPlugin extends Plugin {
 		
 		processMessage(actionName + " " + itemName, MessageType.ACCESSIBILITY);
 	}
+
+	private MP3Player getJacoPlayer() {
+		MP3Player player = this.jacoPlayer;
+		if (player == null) {
+			synchronized (this) {
+				player = this.jacoPlayer;
+				if (player == null) {
+					player = this.jacoPlayer = new MP3Player();
+				}
+			}
+		}
+		return player;
+	}
+
 }
