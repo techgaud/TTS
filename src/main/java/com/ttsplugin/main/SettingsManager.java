@@ -16,7 +16,7 @@ public class SettingsManager {
 	private TTSConfig config;
 
 	void init() {
-		setSpecialPhrases(config.blacklistedWords());
+		setSpecialPhrases(config.denylistedWords());
 	}
 
 	void clear() {
@@ -30,7 +30,7 @@ public class SettingsManager {
 	}
 
 	public boolean passesAllowDenyList(String message) {
-		final boolean mode = config.whitelist();
+		final boolean mode = config.allowlist();
 		for (String phrase : specialPhrases) {
 			if (message.contains(phrase)) {
 				return mode;
