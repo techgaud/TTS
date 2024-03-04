@@ -185,7 +185,7 @@ public class TTSPlugin extends Plugin {
 		if (config.dialogs()) {
 			Dialog dialog = Dialog.getCurrentDialog(client);
 
-			if (dialog != null && !dialog.equals(lastDialog)) {
+			if (dialog != null && !dialog.equals(lastDialog) && settingsManager.passesAllowDenyList(dialog.getMessage())) {
 				executor.execute(this::stopClip);
 				processMessage(dialog.getMessage(), dialog.getSender(), MessageType.DIALOG);
 			}
