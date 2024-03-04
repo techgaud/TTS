@@ -21,6 +21,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.NotificationFired;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.input.KeyManager;
@@ -62,6 +63,7 @@ public class TTSPlugin extends Plugin {
 	@Inject private Client client;
 	@Inject private TTSConfig config;
 	@Inject private ItemManager itemManager;
+	@Inject private SettingsManager settingsManager;
 
 	@Inject private ScheduledExecutorService executor;
 
@@ -91,6 +93,8 @@ public class TTSPlugin extends Plugin {
 	
 	@Override
 	protected void startUp() {
+		settingsManager.init();
+
 		// TODO: consolidate hotkey vs click message processing
 		this.keyManager.registerKeyListener(this.hotkeyListener);
 		this.keyManager.registerKeyListener(this.quantityHotkeyListener);
@@ -132,6 +136,8 @@ public class TTSPlugin extends Plugin {
 
 	@Override
 	protected void shutDown() {
+		settingsManager.clear();
+
 		this.keyManager.unregisterKeyListener(this.hotkeyListener);
 		this.keyManager.unregisterKeyListener(this.quantityHotkeyListener);
 		this.mouseManager.unregisterMouseListener(this.mouseHandler);
@@ -154,15 +160,22 @@ public class TTSPlugin extends Plugin {
 	}
 
 	@Subscribe
+	public void onConfigChanged(ConfigChanged event) {
+		if ("tts".equals(event.getGroup())) {
+			settingsManager.onConfigChange(event.getKey(), event.getNewValue());
+		}
+	}
+
+	@Subscribe
 	public void onNotificationFired(NotificationFired event) {
-		if (config.notificationMessages() && passesBlacklist(event.getMessage())) {
+		if (config.notificationMessages() && settingsManager.passesAllowDenyList(event.getMessage())) {
 			processMessage(event.getMessage(), MessageType.NOTIFICATION);
 		}
 	}
 
 	@Subscribe
 	public void onChatMessage(ChatMessage event) {
-		if (passesBlacklist(event.getMessage())) {
+		if (settingsManager.passesAllowDenyList(event.getMessage())) {
 			processMessage(event.getMessage(), event.getName(), event.getType(), MessageType.CHAT);
 		}
 	}
@@ -205,22 +218,6 @@ public class TTSPlugin extends Plugin {
 		}
 	}
 
-	public boolean passesBlacklist(String message) {
-		boolean found = false;
-		for (String line : config.blacklistedWords().split("\\r?\\n")) {
-			if (line.length() > 1 && message.contains(line)) {
-				if(config.whitelist()) {
-					found = true;
-					break;
-				} else {
-					return false;
-				}
-			}
-		}
-
-		return !config.whitelist() || found;
-	}
-
 	public void processMessage(String message, MessageType messageType) {
 		processMessage(message, "", null, messageType);
 	}
@@ -236,13 +233,13 @@ public class TTSPlugin extends Plugin {
 		int voice = 0;
 		int distance = 1;
 		if (messageType == MessageType.CHAT) {
-			Player player = getPlayerFromUsername(sender);
 			if (type != ChatMessageType.PUBLICCHAT && type != ChatMessageType.AUTOTYPER && !config.gameMessages()) return;
 			if (type == ChatMessageType.AUTOTYPER && !config.autoChat()) return;
 			if (!sender.isEmpty() && ignoreSpam(message, sender) && config.ignoreSpam()) return;
 			if (!config.chatMessages() && !sender.isEmpty()) return;
+			Player player = getPlayerFromUsername(sender);
 			if (config.chatMessagesFriendsOnly() && !player.isFriend()) return;
-			
+
 			voice = getVoice(sender, player == null ? Gender.UNKNOWN : Gender.get(player.getPlayerComposition().isFemale())).id;
 			distance = player == null ? 0 : client.getLocalPlayer().getWorldLocation().distanceTo(player.getWorldLocation());
 		} else if (messageType == MessageType.DIALOG) {
