@@ -45,13 +45,13 @@ public interface TTSConfig extends Config {
 		return true;
 	}
 
-	@ConfigItem(keyName = "blacklistedWords", name = "Blacklisted words", description = "Any message that contains these words will not be spoken <br> Write the word then press enter for new line <br> Each word needs to be longer than 1 character", position = 27, section = generalSettings)
-	default String blacklistedWords() {
+	@ConfigItem(keyName = "blacklistedWords", name = "Denylisted words", description = "Any message that contains these words will not be spoken <br> Write the word then press enter for new line <br> Each word needs to be longer than 1 character", position = 27, section = generalSettings)
+	default String denylistedWords() {
 		return "";
 	}
 
-	@ConfigItem(keyName = "whitelist", name = "Whitelist", description = "Invert blacklist functionality to only speak messages that contain those words.", position = 28, section = generalSettings)
-	default boolean whitelist() {
+	@ConfigItem(keyName = "whitelist", name = "Allowlist", description = "Invert denylist functionality to only speak messages that contain those words.", position = 28, section = generalSettings)
+	default boolean allowlist() {
 		return false;
 	}
 
