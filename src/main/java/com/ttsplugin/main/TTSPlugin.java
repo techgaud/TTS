@@ -238,7 +238,7 @@ public class TTSPlugin extends Plugin {
 			if (!sender.isEmpty() && ignoreSpam(message, sender) && config.ignoreSpam()) return;
 			if (!config.chatMessages() && !sender.isEmpty()) return;
 			Player player = getPlayerFromUsername(sender);
-			if (config.chatMessagesFriendsOnly() && !player.isFriend()) return;
+			if (player != null && config.chatMessagesFriendsOnly() && !player.isFriend()) return;
 
 			voice = getVoice(sender, player == null ? Gender.UNKNOWN : Gender.get(player.getPlayerComposition().isFemale())).id;
 			distance = player == null ? 0 : client.getLocalPlayer().getWorldLocation().distanceTo(player.getWorldLocation());
