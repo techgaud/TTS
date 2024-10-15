@@ -41,6 +41,6 @@ public enum Voice {
 	
 	@Override
 	public String toString() {
-		return Utils.toLowerCaseWithFirstUppercase(this.name()) + " " + Utils.toLowerCaseWithFirstUppercase(this.language.name()) + " " + Utils.toLowerCaseWithFirstUppercase(this.gender.name());
+		return Utils.toLowerCaseWithFirstUppercase(this.name()) + " " + Utils.toLowerCaseWithFirstUppercase(this.language.name()) + " " + this.gender;
 	}
 }
