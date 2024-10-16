@@ -176,7 +176,7 @@ public class TTSPlugin extends Plugin {
 	@Subscribe
 	public void onChatMessage(ChatMessage event) {
 		if (settingsManager.passesAllowDenyList(event.getMessage())) {
-			processMessage(event.getMessage(), event.getName(), event.getType(), MessageType.CHAT);
+			processMessage(event.getMessage(), Text.sanitize(event.getName()), event.getType(), MessageType.CHAT);
 		}
 	}
 
@@ -414,9 +414,8 @@ public class TTSPlugin extends Plugin {
 	}
 	
 	private Player getPlayerFromUsername(String username) {
-		String sanitized = Text.sanitize(username);
 		for (Player player : client.getCachedPlayers()) {
-			if (player != null && player.getName() != null && Text.sanitize(player.getName()).equals(sanitized)) {
+			if (player != null && player.getName() != null && Text.sanitize(player.getName()).equals(username)) {
 				return player;
 			}
 		}
