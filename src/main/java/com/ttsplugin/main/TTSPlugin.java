@@ -414,7 +414,7 @@ public class TTSPlugin extends Plugin {
 	}
 	
 	private Player getPlayerFromUsername(String username) {
-		for (Player player : client.getCachedPlayers()) {
+		for (Player player : client.getTopLevelWorldView().players()) {
 			if (player != null && player.getName() != null && Text.sanitize(player.getName()).equals(username)) {
 				return player;
 			}
