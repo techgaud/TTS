@@ -240,11 +240,11 @@ public class TTSPlugin extends Plugin {
 			Player player = getPlayerFromUsername(sender);
 			if (config.chatMessagesFriendsOnly() && !player.isFriend()) return;
 
-			voice = getVoice(sender, player == null ? Gender.UNKNOWN : Gender.get(player.getPlayerComposition().isFemale())).id;
+			voice = getVoice(sender, player == null ? Gender.UNKNOWN : Gender.get(player.getPlayerComposition().getGender())).id;
 			distance = player == null ? 0 : client.getLocalPlayer().getWorldLocation().distanceTo(player.getWorldLocation());
 		} else if (messageType == MessageType.DIALOG) {
 			if (sender.equals(client.getLocalPlayer().getName())) {
-				voice = getVoice(sender, Gender.get(client.getLocalPlayer().getPlayerComposition().isFemale())).id;
+				voice = getVoice(sender, Gender.get(client.getLocalPlayer().getPlayerComposition().getGender())).id;
 			} else {
 				if (config.randomVoice() && !config.useDialogVoiceWithRandom()) {
 					voice = getVoice(sender, Gender.UNKNOWN).id;
