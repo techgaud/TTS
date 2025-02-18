@@ -238,7 +238,7 @@ public class TTSPlugin extends Plugin {
 			if (!sender.isEmpty() && ignoreSpam(message, sender) && config.ignoreSpam()) return;
 			if (!config.chatMessages() && !sender.isEmpty()) return;
 			Player player = getPlayerFromUsername(sender);
-			if (config.chatMessagesFriendsOnly() && !player.isFriend()) return;
+			if (player != null && config.chatMessagesFriendsOnly() && !player.isFriend()) return;
 
 			voice = getVoice(sender, player == null ? Gender.UNKNOWN : Gender.get(player.getPlayerComposition().isFemale())).id;
 			distance = player == null ? 0 : client.getLocalPlayer().getWorldLocation().distanceTo(player.getWorldLocation());
@@ -414,8 +414,10 @@ public class TTSPlugin extends Plugin {
 	}
 	
 	private Player getPlayerFromUsername(String username) {
+		if (username.isBlank()) return null;
+		String sanitized = Text.sanitize(username);
 		for (Player player : client.getTopLevelWorldView().players()) {
-			if (player != null && player.getName() != null && Text.sanitize(player.getName()).equals(username)) {
+			if (player != null && player.getName() != null && Text.sanitize(player.getName()).equals(sanitized)) {
 				return player;
 			}
 		}
