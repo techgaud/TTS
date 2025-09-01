@@ -34,23 +34,33 @@ public interface TTSConfig extends Config {
 	default boolean gameMessages() {
 		return false;
 	}
+	
+	@ConfigItem(keyName = "gimChatMessages", name = "Group Ironman chat messages", description = "Speaks chat messages sent by players in the ironman group", position = 25, section = generalSettings)
+	default boolean gimChatMessages() {
+		return true;
+	}
+	
+	@ConfigItem(keyName = "gimMessages", name = "Group Ironman messages", description = "Speaks messages posted to the ironman group", position = 26, section = generalSettings)
+	default boolean gimMessages() {
+		return true;
+	}
 
-	@ConfigItem(keyName = "notificationMessages", name = "Notification messages", description = "Speak notifications. \"RuneLite\" > \"Notification Settings\" > \"Game message notifications\" must be enabled.", position = 25, section = generalSettings)
+	@ConfigItem(keyName = "notificationMessages", name = "Notification messages", description = "Speak notifications. \"RuneLite\" > \"Notification Settings\" > \"Game message notifications\" must be enabled.", position = 27, section = generalSettings)
 	default boolean notificationMessages() {
 		return false;
 	}
 
-	@ConfigItem(keyName = "dialogs", name = "Dialogs", description = "Applies text to speech for dialogs too <br> You can set the NPC voice by disabling random voice and setting the Dialog voice in voice settings", position = 26, section = generalSettings)
+	@ConfigItem(keyName = "dialogs", name = "Dialogs", description = "Applies text to speech for dialogs too <br> You can set the NPC voice by disabling random voice and setting the Dialog voice in voice settings", position = 28, section = generalSettings)
 	default boolean dialogs() {
 		return true;
 	}
 
-	@ConfigItem(keyName = "blacklistedWords", name = "Denylisted words", description = "Any message that contains these words will not be spoken <br> Write the word then press enter for new line <br> Each word needs to be longer than 1 character", position = 27, section = generalSettings)
+	@ConfigItem(keyName = "blacklistedWords", name = "Denylisted words", description = "Any message that contains these words will not be spoken <br> Write the word then press enter for new line <br> Each word needs to be longer than 1 character", position = 29, section = generalSettings)
 	default String denylistedWords() {
 		return "";
 	}
 
-	@ConfigItem(keyName = "whitelist", name = "Allowlist", description = "Invert denylist functionality to only speak messages that contain those words.", position = 28, section = generalSettings)
+	@ConfigItem(keyName = "whitelist", name = "Allowlist", description = "Invert denylist functionality to only speak messages that contain those words.", position = 30, section = generalSettings)
 	default boolean allowlist() {
 		return false;
 	}
