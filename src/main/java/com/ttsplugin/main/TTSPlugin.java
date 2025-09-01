@@ -234,7 +234,7 @@ public class TTSPlugin extends Plugin {
 		int distance = 1;
 		if (type == ChatMessageType.CLAN_GIM_CHAT && sender != null && config.gimChatMessages()){
 			voice = 5;
-		} else if (type == ChatMessageType.CLAN_GIM_CHAT && config.gimMessages()) {
+		} else if (type == ChatMessageType.CLAN_GIM_MESSAGE && config.gimMessages()) {
 			voice = 5;
 		} else if (messageType == MessageType.CHAT) {
 			if (type != ChatMessageType.PUBLICCHAT && type != ChatMessageType.AUTOTYPER && !config.gameMessages()) return;
@@ -476,3 +476,4 @@ public class TTSPlugin extends Plugin {
 	}
 
 }
+
