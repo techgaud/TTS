@@ -233,7 +233,8 @@ public class TTSPlugin extends Plugin {
 		int voice = 0;
 		int distance = 1;
 		if (type == ChatMessageType.CLAN_GIM_CHAT && sender != null && config.gimChatMessages()){
-			voice = config.gameMessageVoice().id;
+			Player player = getPlayerFromUsername(sender);
+			voice = getVoice(sender, player == null ? Gender.UNKNOWN : Gender.get((player.getPlayerComposition().getGender()))).id;
 		} else if (type == ChatMessageType.CLAN_GIM_MESSAGE && config.gimMessages()) {
 			voice = config.gameMessageVoice().id;
 		} else if (messageType == MessageType.CHAT) {
@@ -476,5 +477,6 @@ public class TTSPlugin extends Plugin {
 	}
 
 }
+
 
 
