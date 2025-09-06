@@ -8,12 +8,13 @@ public enum Gender {
 	public Gender reverse() {
 		return this == FEMALE ? MALE : FEMALE;
 	}
-	
+
+	@Deprecated
 	public static Gender get(boolean female) {
-		return female ? FEMALE : MALE;
+		return get(female ? 1 : 0);
 	}
-	
-	public static Gender get(int female){
-		return female == 1 ? FEMALE : MALE;
+
+	public static Gender get(int gender) {
+		return gender == 1 ? FEMALE : MALE;
 	}
 }
