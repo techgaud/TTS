@@ -93,7 +93,7 @@ public interface TTSConfig extends Config {
 
 	@ConfigItem(keyName = "randomVoice", name = "Random voice", description = "Chooses a random voice from the selected language below for usernames. <br> The same username will always have the same voice for every message <br> Note: If you want to use one single voice then disable this and set the Voice setting", position = 50, section = voiceSettings)
 	default boolean randomVoice() {
-		return true;
+		return false;
 	}
 
 	@ConfigItem(keyName = "randomVoiceLanguage", name = "Random voice language", description = "The language for the above setting", position = 51, section = voiceSettings)
@@ -103,22 +103,22 @@ public interface TTSConfig extends Config {
 
 	@ConfigItem(keyName = "gameMessageVoice", name = "Game message voice", description = "Voice for game messages if \"Game messages\" is enabled (in the general settings)", position = 52, section = voiceSettings)
 	default Voice gameMessageVoice() {
-		return Voice.ZIRA;
+		return Voice.SUSAN;
 	}
 
 	@ConfigItem(keyName = "notificationMessageVoice", name = "Notification message voice", description = "Voice for notification messages if \"Notification messages\" is enabled (in the general settings)", position = 53, section = voiceSettings)
 	default Voice notificationMessageVoice() {
-		return Voice.ZIRA;
+		return Voice.SUSAN;
 	}
 
 	@ConfigItem(keyName = "voice", name = "Voice", description = "Voice for tts <br> Note: This wont do anything if random voice is enabled", position = 54, section = voiceSettings)
 	default Voice voice() {
-		return Voice.HAZEL;
+		return Voice.SUSAN;
 	}
 
 	@ConfigItem(keyName = "dialogVoice", name = "Dialog voice", description = "Voice for dialogs if Random voice is disabled and Dialogs is enabled in general settings <br> This only applies to the NPC not you. The voice above applies to you", position = 55, section = voiceSettings)
 	default Voice dialogVoice() {
-		return Voice.GEORGE;
+		return Voice.SUSAN;
 	}
 
 	@ConfigItem(keyName = "useDialogVoiceWithRandom", name = "Use dialog voice with random voice on", description = "Speaks all dialogs with the dialog voice even if random voice is enabled", position = 56, section = voiceSettings)
@@ -171,6 +171,6 @@ public interface TTSConfig extends Config {
 
 	@ConfigItem(keyName = "altTool", name = "AltTool", description = "", position = 91, section = advancedSettings)
 	default String altTool() {
-		return "";
+		return "Brian5";
 	}
 }
