@@ -119,7 +119,7 @@ public class TTSPlugin extends Plugin {
 					return;
 				} else {
 					jacoPlayer.stop();
-					jacoPlayer.getPlayList().clear();
+					jacoPlayer.clearPlayList();
 				}
 			}
 
@@ -374,7 +374,7 @@ public class TTSPlugin extends Plugin {
 
 		if (jacoPlayer != null && jacoPlayer.isPlaying()) {
 			jacoPlayer.stop();
-			jacoPlayer.getPlayList().clear();
+			jacoPlayer.clearPlayList();
 		}
 	}
 	
