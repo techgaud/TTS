@@ -31,8 +31,9 @@ public class SettingsManager {
 
 	public boolean passesAllowDenyList(String message) {
 		final boolean mode = config.allowlist();
+		final String msg = message.toLowerCase();
 		for (String phrase : specialPhrases) {
-			if (message.contains(phrase)) {
+			if (msg.contains(phrase)) {
 				return mode;
 			}
 		}
@@ -46,6 +47,7 @@ public class SettingsManager {
 				configValue.lines()
 						.map(String::trim)
 						.filter(s -> !s.isEmpty())
+						.map(String::toLowerCase)
 						.distinct()
 						.collect(Collectors.toList())
 		);

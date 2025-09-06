@@ -232,7 +232,14 @@ public class TTSPlugin extends Plugin {
 		
 		int voice = 0;
 		int distance = 1;
-		if (messageType == MessageType.CHAT) {
+		if (type == ChatMessageType.CLAN_GIM_CHAT && config.gimChatMessages()) {
+			if (sender == null) return;
+			Player player = getPlayerFromUsername(sender);
+			voice = getVoice(sender, player == null ? Gender.UNKNOWN : Gender.get((player.getPlayerComposition().getGender()))).id;
+			distance = player == null ? 0 : client.getLocalPlayer().getWorldLocation().distanceTo(player.getWorldLocation());
+		} else if (type == ChatMessageType.CLAN_GIM_MESSAGE && config.gimMessages()) {
+			voice = config.gameMessageVoice().id;
+		} else if (messageType == MessageType.CHAT) {
 			if (type != ChatMessageType.PUBLICCHAT && type != ChatMessageType.AUTOTYPER && !config.gameMessages()) return;
 			if (type == ChatMessageType.AUTOTYPER && !config.autoChat()) return;
 			if (!sender.isEmpty() && ignoreSpam(message, sender) && config.ignoreSpam()) return;
