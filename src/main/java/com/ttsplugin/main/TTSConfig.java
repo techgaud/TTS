@@ -34,13 +34,13 @@ public interface TTSConfig extends Config {
 	default boolean gameMessages() {
 		return false;
 	}
-	
+
 	@ConfigItem(keyName = "gimChatMessages", name = "Group Ironman chat messages", description = "Speaks chat messages sent by players in the ironman group", position = 25, section = generalSettings)
 	default boolean gimChatMessages() {
 		return true;
 	}
-	
-	@ConfigItem(keyName = "gimMessages", name = "Group Ironman messages", description = "Speaks messages posted to the ironman group", position = 26, section = generalSettings)
+
+	@ConfigItem(keyName = "gimMessages", name = "Group Ironman messages", description = "Speaks system messages posted to the ironman group", position = 26, section = generalSettings)
 	default boolean gimMessages() {
 		return true;
 	}
@@ -164,7 +164,7 @@ public interface TTSConfig extends Config {
 		return false;
 	}
 	
-	@ConfigItem(keyName = "chatMessagesFriendsOnly", name = "Chat friends only", description = "Only speaks messages sent by your ingame friends if Chat messages setting is enabled", position = 90, section = advancedSettings)
+	@ConfigItem(keyName = "chatMessagesFriendsOnly", name = "Chat friends only", description = "Only speaks messages sent by your ingame friends if Chat messages setting is enabled.<br/>Does not restrict GIM clan chat messages", position = 90, section = advancedSettings)
 	default boolean chatMessagesFriendsOnly() {
 		return false;
 	}
